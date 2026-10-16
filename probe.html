@@ -60,10 +60,33 @@ function probe() {
   s += line('body.scrollH ', document.body.scrollHeight);
   s += line('scrollY      ', window.scrollY);
   s += line('orientation  ', (screen.orientation && screen.orientation.type) || '-');
+  s += '\n--- 时间线（每刻的窗口高度 / 100vh）---\n' + (window.__tl || []).join('\n');
   document.getElementById('o').innerHTML = s;
 }
+
+// 时间线：从脚本一执行就开始记（比 probe 更早）
+window.__tl = [];
+function mark(tag) {
+  var vh = 0;
+  try {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:absolute;top:0;left:0;width:0;height:100vh;visibility:hidden';
+    (document.body || document.documentElement).appendChild(t);
+    vh = t.offsetHeight; t.remove();
+  } catch (e) { vh = -1; }
+  var ms = Math.round(performance.now());
+  window.__tl.push(tag + '  @' + ms + 'ms  innerH=' + window.innerHeight + '  W=' + window.innerWidth + '  100vh=' + vh + 'px  readyState=' + document.readyState);
+}
+mark('script');
+document.addEventListener('DOMContentLoaded', function () { mark('DOMContentLoaded'); });
+window.addEventListener('load', function () { mark('load'); });
+setTimeout(function () { mark('t+100'); probe(); }, 100);
+setTimeout(function () { mark('t+400'); probe(); }, 400);
+setTimeout(function () { mark('t+1500'); probe(); }, 1500);
+setTimeout(function () { mark('t+3000'); probe(); }, 3000);
+
 probe();
-window.addEventListener('resize', probe);
+window.addEventListener('resize', function () { mark('resize'); probe(); });
 window.addEventListener('orientationchange', function () { setTimeout(probe, 350); });
 </script>
 </body>
