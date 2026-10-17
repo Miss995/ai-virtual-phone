@@ -303,6 +303,55 @@
     box-shadow:0 -1px 0 rgba(255,255,255,.05), 0 3px 8px -4px rgba(0,0,0,.9);
   }
 
+  /* ── 出纸口 ── */
+  .paperbay{
+    position:relative;
+    margin:0 9px;
+    height:0;
+    z-index:1;
+  }
+  .slotline{
+    position:relative;
+    height:7px;margin:0 7px;
+    border-radius:0 0 3px 3px;
+    background:linear-gradient(180deg,#0e0c0b,#1a1715);
+    box-shadow:
+      0 2px 6px rgba(0,0,0,.9) inset,
+      0 1px 0 rgba(255,255,255,.08);
+  }
+  /* 从缝里朝人这边吐出来的纸：上窄下宽，带透视和前倾 */
+  .sheet{
+    position:absolute;left:14px;right:14px;top:6px;
+    height:0;
+    transform-origin:top center;
+    transform:perspective(360px) rotateX(58deg);
+    background:
+      repeating-linear-gradient(180deg, transparent 0 21px, rgba(90,110,150,.14) 21px 22px),
+      linear-gradient(178deg,#faf6ea,#efe9d8);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.9) inset,
+      0 10px 26px -10px rgba(0,0,0,.9),
+      0 3px 12px -4px rgba(0,0,0,.6);
+    border-radius:0 0 3px 3px;
+    transition:height .42s steps(10);
+    overflow:hidden;
+    z-index:2;
+  }
+  .sheet.on{height:64px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 16px 34px -12px rgba(0,0,0,.95),0 4px 16px -5px rgba(0,0,0,.7)}
+  /* 纸两边齿孔 */
+  .sheet::before,.sheet::after{
+    content:"";position:absolute;top:0;bottom:0;width:8px;
+    background:radial-gradient(circle at 4px 5px, rgba(70,60,45,.4) 1.8px, transparent 2.2px) 0 0/8px 11px repeat-y;
+  }
+  .sheet::before{left:0}
+  .sheet::after{right:0}
+  /* 卷曲的那道阴影（纸往下垂的感觉） */
+  .sheet .curl{
+    position:absolute;left:0;right:0;bottom:0;height:26px;
+    background:linear-gradient(180deg,transparent,rgba(120,105,80,.22));
+    pointer-events:none;
+  }
+
   /* ── 贴在机器前脸的便利贴 ── */
   .sticky-zone{position:relative;height:0}
   .sticky{
@@ -480,6 +529,10 @@
           <textarea id="prnTa" rows="2" placeholder="在这儿敲字，屏幕会亮…"></textarea>
         </div>
       </div>
+      <div class="paperbay">
+        <div class="slotline"></div>
+        <div class="sheet" id="sheet"></div>
+      </div>
       <div class="deck">
         <div class="tag">CAT-PRINTER · MODEL Ⅶ</div>
         <div class="pin" id="prnPin" style="flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;cursor:pointer;font-size:18px;line-height:1;color:rgba(255,255,255,.55);background:rgba(255,255,255,.07);box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 2px 0 rgba(0,0,0,.35);transition:.12s">＋</div>
@@ -533,6 +586,14 @@
         <div class="send">↑</div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="sticky-layer" id="stkLayer">
+  <div class="sticky-card" id="stkCard">
+    <div class="fray" id="fray"></div>
+    <span id="stkText"></span>
+    <div class="sticky-hint">往右滑 → 撕下来</div>
   </div>
 </div>
 
@@ -673,6 +734,20 @@ function prnWake(on){
 prnTa.addEventListener('input',()=>prnWake(prnTa.value.trim().length>0));
 prnTa.addEventListener('focus',()=>setTimeout(()=>prnTa.scrollIntoView({block:'center',behavior:'smooth'}),260));
 
+const sheetEl=document.getElementById('sheet');
+
+// 从出纸口吐纸 → 吐完撕下飞进聊天
+function printOut(text, cb){
+  if(!sheetEl){ cb(text); return; }
+  sheetEl.innerHTML='<div class="curl"></div>';
+  sheetEl.classList.add('on');
+  led2.className='led on';
+  setTimeout(()=>{
+    sheetEl.classList.remove('on');
+    setTimeout(()=>{ led2.className='led warm'; cb(text); }, 210);
+  }, 430);
+}
+
 function tearOff(text){
   const b=document.createElement('div');
   b.className='bubble me print';
@@ -719,7 +794,7 @@ function endDrag(){
     stkLayer.classList.remove('on');
     const t=pending; pending='';
     stk.classList.add('hide'); stk.textContent='';
-    setTimeout(()=>tearOff(t),170);
+    setTimeout(()=>printOut(t, tearOff),170);
   }
 }
 stkCard.addEventListener('pointerup',endDrag);
@@ -729,19 +804,12 @@ stkLayer.addEventListener('click',e=>{ if(e.target===stkLayer) stkLayer.classLis
 
 prnGo.addEventListener('click',()=>{
   const t=prnTa.value.trim();
-  if(t){ prnTa.value=''; prnWake(false); tearOff(t); return; }
+  if(t){ prnTa.value=''; prnWake(false); printOut(t, tearOff); return; }
   if(pending){ stkText.textContent=pending; stkLayer.classList.add('on'); }
 });
 
 /* 切换时同步 fixed/文档流 */
 show('1');
 </script>
-<div class="sticky-layer" id="stkLayer">
-  <div class="sticky-card" id="stkCard">
-    <div class="fray" id="fray"></div>
-    <span id="stkText"></span>
-    <div class="sticky-hint">往右滑 → 撕下来</div>
-  </div>
-</div>
 </body>
 </html>
