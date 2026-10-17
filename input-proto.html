@@ -219,6 +219,50 @@
       0 16px 34px -16px rgba(0,0,0,.95),
       0 4px 12px -8px rgba(0,0,0,.9);
   }
+  .tone{
+    flex:0 0 auto;width:20px;height:20px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;
+    font-size:12px;line-height:1;color:rgba(255,255,255,.42);
+    background:rgba(255,255,255,.06);
+    box-shadow:0 1px 0 rgba(255,255,255,.10) inset;
+    transition:.15s;
+  }
+  .tone:active{transform:scale(.9)}
+  .mach.light .tone{color:rgba(90,84,76,.55);background:rgba(0,0,0,.06);box-shadow:0 1px 0 rgba(255,255,255,.9) inset}
+
+  /* ── 白色版 ── */
+  .mach.light{
+    background:linear-gradient(180deg,#fdfcfa 0%,#f1eee8 32%,#e3dfd7 70%,#d6d1c8 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.98) inset,
+      0 -3px 0 rgba(0,0,0,.09) inset,
+      0 16px 34px -16px rgba(0,0,0,.62),
+      0 4px 12px -8px rgba(0,0,0,.42);
+  }
+  .mach.light .vents{
+    background:repeating-linear-gradient(90deg, rgba(0,0,0,.15) 0 3px, rgba(255,255,255,.85) 3px 6px);
+    box-shadow:0 1px 0 rgba(255,255,255,.95);
+  }
+  .mach.light .bezel{
+    background:linear-gradient(180deg,#cfcac2,#bab4ab);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 0 rgba(255,255,255,.95);
+  }
+  .mach.light .tag{color:rgba(90,84,76,.42)}
+  .mach.light .mach-base{
+    background:linear-gradient(180deg,#c9c4bb,#b8b2a8);
+    box-shadow:0 -1px 0 rgba(255,255,255,.75), 0 3px 8px -4px rgba(0,0,0,.35);
+  }
+  .mach.light .slotline{
+    background:linear-gradient(180deg,#b4afa6,#98928a);
+    box-shadow:0 -2px 7px rgba(0,0,0,.32) inset, 0 1px 0 rgba(255,255,255,.85);
+  }
+  .mach.light .pin{
+    color:rgba(80,74,66,.62);
+    background:rgba(0,0,0,.045);
+    box-shadow:0 1px 0 rgba(255,255,255,.95) inset, 0 2px 0 rgba(0,0,0,.10);
+  }
+  .mach.light .led.idle{background:#b6b0a6;box-shadow:inset 0 1px 1px rgba(0,0,0,.25)}
+
   /* 顶部散热 */
   .mach-top{
     display:flex;align-items:center;gap:9px;
@@ -536,6 +580,7 @@
         <div class="led idle" id="led1"></div>
         <div class="led idle" id="led2"></div>
         <div class="vents"></div>
+        <div class="tone" id="tone" title="换色">◐</div>
       </div>
       <div class="paperbay">
         <div class="sheet" id="sheet"></div>
@@ -823,6 +868,10 @@ stkCard.addEventListener('pointerup',endDrag);
 stkCard.addEventListener('pointercancel',endDrag);
 
 stkLayer.addEventListener('click',e=>{ if(e.target===stkLayer) stkLayer.classList.remove('on'); });
+
+document.getElementById('tone').addEventListener('click',()=>{
+  document.querySelector('#v12 .mach').classList.toggle('light');
+});
 
 prnGo.addEventListener('click',()=>{
   const t=prnTa.value.trim();
