@@ -221,24 +221,47 @@
   }
   /* ── 机身右下侧的进纸口 + 附件卡片 ── */
   .mach{overflow:visible}
+  /* 机器底下压着的一沓纸：只露出一道纸边 */
   .side-slot{
-    position:absolute;left:8px;right:8px;bottom:-5px;
-    height:12px;
-    border-radius:0 0 7px 7px;
-    background:linear-gradient(180deg,#1b1816 30%,#0b0a09);
+    position:absolute;left:9px;right:9px;bottom:-8px;
+    height:11px;
+    border-radius:0 0 3px 3px;
+    background:linear-gradient(180deg,#fbf8ee 0%,#f2ecdd 46%,#e2dac6 100%);
     box-shadow:
-      inset 0 4px 7px rgba(0,0,0,.95),
-      0 1px 0 rgba(255,255,255,.05);
+      0 -1px 0 rgba(255,255,255,.85) inset,
+      0 4px 10px -4px rgba(0,0,0,.9);
     z-index:5;
   }
+  /* 压痕：只在接触那一线最深，往外很快散掉 */
+  .side-slot::before{
+    content:"";position:absolute;left:0;right:0;top:-1px;height:3px;
+    background:linear-gradient(180deg, rgba(0,0,0,.5), rgba(0,0,0,0));
+    border-radius:2px;
+    pointer-events:none;
+  }
+  /* 纸边右下角微微翘一点 */
+  .side-slot::after{
+    content:"";position:absolute;right:6px;bottom:-2px;
+    width:26px;height:5px;
+    background:linear-gradient(200deg, rgba(255,255,255,.9), rgba(210,200,175,.15));
+    border-radius:50%;
+    transform:rotate(-2.4deg);
+    filter:blur(.4px);
+    pointer-events:none;
+  }
   .mach.light .side-slot{
-    background:linear-gradient(180deg,#8f8980 20%,#b3ada3);
-    box-shadow:inset 0 4px 7px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.7);
+    background:linear-gradient(180deg,#fdfbf4 0%,#f4eee0 46%,#e6dfcc 100%);
+    box-shadow:
+      0 -1px 0 rgba(255,255,255,.95) inset,
+      0 4px 10px -4px rgba(70,64,56,.55);
+  }
+  .mach.light .side-slot::before{
+    background:linear-gradient(180deg, rgba(70,64,56,.34), rgba(70,64,56,0));
   }
 
   /* 卡片沓：贴在机身下方、靠右 */
   .attachbox{
-    position:absolute;left:0;right:0;bottom:-26px;
+    position:absolute;left:0;right:0;bottom:-28px;
     height:0;z-index:4;
   }
   .card{
