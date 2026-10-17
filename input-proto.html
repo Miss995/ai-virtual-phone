@@ -227,9 +227,9 @@
   .mach{overflow:visible}
   /* 机器底下压着的一沓纸：只露出一道纸边 */
   .side-slot{
-    position:absolute;left:9px;right:9px;bottom:-8px;
+    position:absolute;left:0;right:0;bottom:-8px;
     height:11px;
-    border-radius:0 0 3px 3px;
+    border-radius:0 0 13px 13px;
     background:linear-gradient(180deg,#fbf8ee 0%,#f2ecdd 46%,#e2dac6 100%);
     box-shadow:
       0 -1px 0 rgba(255,255,255,.85) inset,
@@ -265,12 +265,12 @@
 
   /* 卡片沓：贴在机身下方、靠右 */
   .attachbox{
-    position:absolute;left:0;right:0;bottom:-28px;
+    position:absolute;left:0;right:0;bottom:-42px;
     height:0;z-index:4;
   }
   .card{
     position:absolute;left:-1px;right:-1px;bottom:0;
-    height:20px;border-radius:1px 1px 0 0;
+    height:34px;border-radius:1px 1px 0 0;
     background:linear-gradient(178deg,#f8f4e8,#ebe4d4);
     border:1px solid rgba(120,105,80,.3);
     border-bottom:0;
@@ -432,8 +432,8 @@
 
   /* 底部纸仓接缝 */
   .mach-base{
-    height:9px;margin:0 6px 4px;
-    border-radius:0 0 10px 10px;
+    height:9px;margin:0 0 4px;
+    border-radius:0 0 14px 14px;
     background:linear-gradient(180deg,#1d1a18,#2a2623);
     box-shadow:0 -1px 0 rgba(255,255,255,.05), 0 3px 8px -4px rgba(0,0,0,.9);
   }
@@ -667,7 +667,7 @@
   </div>
 
   <!-- ⑫ 打印机（屏幕版） -->
-  <div id="v12" class="hide" style="padding-bottom:96px">
+  <div id="v12" class="hide" style="padding-bottom:112px">
     <div class="mach">
       <div class="mach-top">
         <div class="led idle" id="led1"></div>
