@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>输入框 · 五个方向</title>
+<title>输入框 · 七个方向</title>
 <style>
   :root{
     --bg0:#12100f; --orange:#e8934a; --orange-soft:#f2b077;
@@ -20,7 +20,8 @@
     font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif;
     overflow-x:hidden;
   }
-  .wrap{max-width:520px;margin:0 auto;padding:14px 16px 200px}
+  .wrap{max-width:520px;margin:0 auto;padding:14px 16px 210px}
+  body.inline .wrap{padding-bottom:50px}
 
   .tabs{
     position:sticky;top:0;z-index:40;
@@ -35,106 +36,42 @@
     border:1px solid var(--hair);background:rgba(255,255,255,.02);
     transition:.18s;cursor:pointer;
   }
-  .tab.on{
-    color:#1a1310;background:linear-gradient(180deg,var(--orange-soft),var(--orange));
-    border-color:transparent;font-weight:600;
-  }
+  .tab.on{color:#1a1310;background:linear-gradient(180deg,var(--orange-soft),var(--orange));border-color:transparent;font-weight:600}
 
-  .bubble{
-    max-width:76%;padding:10px 14px;border-radius:16px;margin:0 0 10px;
-    font-size:14px;line-height:1.55;
-  }
+  .bubble{max-width:76%;padding:10px 14px;border-radius:16px;margin:0 0 10px;font-size:14px;line-height:1.55}
   .bubble.them{background:rgba(255,255,255,.06);border:1px solid var(--hair);border-bottom-left-radius:5px}
-  .bubble.me{
-    margin-left:auto;
-    background:linear-gradient(160deg,rgba(232,147,74,.22),rgba(232,147,74,.10));
-    border:1px solid rgba(232,147,74,.22);border-bottom-right-radius:5px;
-  }
+  .bubble.me{margin-left:auto;background:linear-gradient(160deg,rgba(232,147,74,.22),rgba(232,147,74,.10));border:1px solid rgba(232,147,74,.22);border-bottom-right-radius:5px}
   .who{font-size:11px;color:var(--txt-dim);margin:0 0 12px;letter-spacing:.06em}
 
-  .composer{
-    position:fixed;left:0;right:0;bottom:0;z-index:30;
-    padding:10px 16px calc(14px + env(safe-area-inset-bottom));
-  }
+  .composer{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 16px calc(14px + env(safe-area-inset-bottom))}
+  body.inline .composer{display:none}
   .inner{max-width:520px;margin:0 auto}
   .hint{font-size:12px;color:var(--txt-dim);margin:12px 2px 0;line-height:1.65}
   .hint b{color:var(--orange-soft);font-weight:600}
   .hide{display:none!important}
 
-  /* ═══════ ① 半成品气泡 ═══════ */
-  .ghost-wrap{position:relative}
-  .ghost{
-    max-width:86%;padding:11px 15px;border-radius:16px;border-bottom-right-radius:5px;
-    border:1.5px dashed rgba(232,147,74,.5);
-    background:rgba(232,147,74,.06);
-    color:rgba(239,233,227,.78);
-    font-size:14px;line-height:1.55;
-    outline:0;min-height:46px;
-    transition:.24s;
-  }
-  .ghost:empty::before{
-    content:"还没说出口的话…";color:rgba(239,233,227,.32);
-  }
-  .ghost:focus{
-    border-color:rgba(232,147,74,.95);
-    background:rgba(232,147,74,.10);
-    box-shadow:0 0 0 3px rgba(232,147,74,.10);
-    color:var(--txt);
-  }
-  .ghost-tools{
-    display:flex;justify-content:flex-end;gap:8px;margin-top:9px;
-    max-width:86%;
-    opacity:0;transform:translateY(4px);pointer-events:none;transition:.2s;
-  }
+  /* ═══ ① 半成品气泡 ═══ */
+  .ghost{max-width:86%;padding:11px 15px;border-radius:16px;border-bottom-right-radius:5px;border:1.5px dashed rgba(232,147,74,.5);background:rgba(232,147,74,.06);color:rgba(239,233,227,.78);font-size:14px;line-height:1.55;outline:0;min-height:46px;transition:.24s}
+  .ghost:empty::before{content:"还没说出口的话…";color:rgba(239,233,227,.32)}
+  .ghost:focus{border-color:rgba(232,147,74,.95);background:rgba(232,147,74,.10);box-shadow:0 0 0 3px rgba(232,147,74,.10);color:var(--txt)}
+  .ghost-tools{display:flex;justify-content:flex-end;gap:8px;margin-top:9px;max-width:86%;opacity:0;transform:translateY(4px);pointer-events:none;transition:.2s}
   .ghost-tools.on{opacity:1;transform:none;pointer-events:auto}
-  .gbtn{
-    padding:7px 14px;border-radius:999px;font-size:13px;cursor:pointer;
-    border:1px solid var(--hair);color:var(--txt-dim);background:transparent;
-  }
-  .gbtn.go{
-    border-color:transparent;color:#1a1310;font-weight:600;
-    background:linear-gradient(180deg,var(--orange-soft),var(--orange));
-  }
-  /* 真气泡出现时的动画 */
-  @keyframes pop{
-    0%{opacity:0;transform:translateY(8px) scale(.97);border-color:rgba(232,147,74,.9)}
-    60%{opacity:1;transform:translateY(0) scale(1)}
-    100%{border-color:rgba(232,147,74,.22)}
-  }
+  .gbtn{padding:7px 14px;border-radius:999px;font-size:13px;cursor:pointer;border:1px solid var(--hair);color:var(--txt-dim);background:transparent}
+  .gbtn.go{border-color:transparent;color:#1a1310;font-weight:600;background:linear-gradient(180deg,var(--orange-soft),var(--orange))}
+  @keyframes pop{0%{opacity:0;transform:translateY(8px) scale(.97)}60%{opacity:1;transform:translateY(0) scale(1)}100%{}}
   .bubble.me.fresh{animation:pop .5s ease-out}
 
-  /* ═══════ ② 只有光标 ═══════ */
-  .cursor-zone{
-    position:relative;display:flex;align-items:flex-end;gap:12px;
-    min-height:38px;
-  }
-  .cursor-zone textarea{
-    flex:1;background:transparent;border:0;outline:0;resize:none;
-    color:var(--txt);font:inherit;line-height:1.55;
-    caret-color:var(--orange);
-    max-height:120px;padding:7px 0;
-  }
+  /* ═══ ② 只有光标 ═══ */
+  .cursor-zone{position:relative;display:flex;align-items:flex-end;gap:12px;min-height:38px}
+  .cursor-zone textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.55;caret-color:var(--orange);max-height:120px;padding:7px 0}
   .cursor-zone textarea::placeholder{color:transparent}
-  .cursor-zone .send{
-    width:38px;height:38px;border-radius:50%;flex:0 0 auto;
-    display:grid;place-items:center;cursor:pointer;
-    background:linear-gradient(180deg,var(--orange-soft),var(--orange));
-    color:#1a1310;border:0;
-    opacity:0;transform:scale(.8);pointer-events:none;
-    transition:.22s cubic-bezier(.34,1.56,.64,1);
-  }
+  .cursor-zone .send{width:38px;height:38px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;background:linear-gradient(180deg,var(--orange-soft),var(--orange));color:#1a1310;border:0;opacity:0;transform:scale(.8);pointer-events:none;transition:.22s cubic-bezier(.34,1.56,.64,1)}
   .cursor-zone .send.on{opacity:1;transform:scale(1);pointer-events:auto}
-  .idle-dot{
-    position:absolute;left:0;bottom:11px;
-    width:2px;height:20px;border-radius:1px;
-    background:var(--orange);
-    animation:blink 1.15s steps(1) infinite;
-    transition:opacity .2s;
-  }
+  .idle-dot{position:absolute;left:0;bottom:11px;width:2px;height:20px;border-radius:1px;background:var(--orange);animation:blink 1.15s steps(1) infinite;transition:opacity .2s}
   .idle-dot.hide{opacity:0}
   @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.12}}
 
-  /* ═══════ ③ 无边框 ═══════ */
+  /* ═══ ③ 无边框 ═══ */
   .v1{display:flex;align-items:flex-end;gap:10px;padding:6px 2px 4px;border-bottom:1px solid rgba(255,255,255,.14);transition:border-color .22s}
   .v1:focus-within{border-bottom-color:var(--orange)}
   .v1 textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.5;max-height:120px;padding:6px 0}
@@ -142,7 +79,7 @@
   .v1 .send{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--txt-dim);transition:.2s;cursor:pointer}
   .v1 .send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));border-color:transparent;color:#1a1310}
 
-  /* ═══════ ④ 药丸 ═══════ */
+  /* ═══ ④ 药丸 ═══ */
   .v2{display:flex;align-items:center;gap:8px;padding:7px 8px 7px 16px;border-radius:999px;background:rgba(255,255,255,.055);border:1px solid var(--hair);backdrop-filter:blur(8px);transition:.22s}
   .v2:focus-within{border-color:rgba(232,147,74,.55);box-shadow:0 0 0 3px rgba(232,147,74,.12)}
   .v2 textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.5;max-height:110px;padding:5px 0}
@@ -151,13 +88,64 @@
   .v2 .send{width:36px;height:36px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.08);color:var(--txt-dim);transition:.2s}
   .v2 .send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));color:#1a1310;box-shadow:0 6px 18px -6px rgba(232,147,74,.8)}
 
-  /* ═══════ ⑤ 玻璃 ═══════ */
+  /* ═══ ⑤ 玻璃 ═══ */
   .v3{position:relative;padding:8px 8px 8px 18px;border-radius:22px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);box-shadow:0 14px 40px -18px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.18);display:flex;align-items:flex-end;gap:10px}
   .v3::after{content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 38%);opacity:.9;mix-blend-mode:screen}
   .v3 textarea{flex:1;position:relative;z-index:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.5;max-height:110px;padding:7px 0}
   .v3 textarea::placeholder{color:rgba(239,233,227,.5)}
   .v3 .send{position:relative;z-index:1;width:38px;height:38px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:var(--txt);transition:.2s}
   .v3 .send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));border-color:transparent;color:#1a1310}
+
+  /* ═══ ⑨ 跟在对话后面 ═══ */
+  .p9{margin-top:6px}
+  .p9-stream{min-height:40px}
+  .p9-line{
+    display:flex;align-items:flex-end;gap:10px;
+    margin:26px 0 40px;padding:8px 0 6px;
+    border-bottom:1px solid rgba(255,255,255,.13);
+    transition:border-color .22s;
+  }
+  .p9-line:focus-within{border-bottom-color:var(--orange)}
+  .p9-line textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.55;max-height:120px;padding:6px 0}
+  .p9-line textarea::placeholder{color:rgba(239,233,227,.28)}
+  .p9-line .send{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,.16);color:var(--txt-dim);transition:.2s}
+  .p9-line .send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));border-color:transparent;color:#1a1310}
+  .p9-tail{font-size:11.5px;color:rgba(143,136,128,.7);margin:0 0 46px;letter-spacing:.04em}
+
+  /* ═══ ⑩ 便签叠 ═══ */
+  .notes{display:flex;flex-direction:column;gap:9px;margin:0 0 14px}
+  .note{
+    position:relative;max-width:88%;padding:10px 34px 10px 14px;
+    border-radius:10px 10px 10px 3px;
+    background:linear-gradient(160deg,#2c2419,#241d15);
+    border:1px solid rgba(232,147,74,.28);
+    color:rgba(239,233,227,.85);font-size:13.5px;line-height:1.55;
+    cursor:pointer;transition:.18s;
+    transform-origin:left center;
+  }
+  .note::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    border-radius:10px 0 0 10px;
+    background:linear-gradient(180deg,var(--orange-soft),var(--orange));
+    opacity:.75;
+  }
+  .note:active{transform:scale(.985)}
+  .note .del{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    width:20px;height:20px;display:grid;place-items:center;
+    color:rgba(143,136,128,.9);font-size:15px;line-height:1;
+    border-radius:50%;
+  }
+  .note .del:active{background:rgba(255,255,255,.08)}
+  .n-input{display:flex;align-items:flex-end;gap:8px;padding:7px 8px 7px 16px;border-radius:999px;background:rgba(255,255,255,.055);border:1px solid var(--hair);transition:.22s}
+  .n-input:focus-within{border-color:rgba(232,147,74,.55);box-shadow:0 0 0 3px rgba(232,147,74,.12)}
+  .n-input textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.5;max-height:110px;padding:5px 0}
+  .n-input textarea::placeholder{color:var(--txt-dim)}
+  .n-add,.n-send{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;font-size:17px;line-height:1;transition:.2s}
+  .n-add{background:rgba(255,255,255,.07);border:1px solid var(--hair);color:var(--txt-dim)}
+  .n-send{background:rgba(255,255,255,.08);color:var(--txt-dim)}
+  .n-send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));color:#1a1310}
+  .empty-tip{font-size:12.5px;color:rgba(143,136,128,.65);margin:0 0 12px}
 </style>
 </head>
 <body>
@@ -168,6 +156,8 @@
     <div class="tab" data-v="3">③ 无边框</div>
     <div class="tab" data-v="4">④ 药丸</div>
     <div class="tab" data-v="5">⑤ 玻璃</div>
+    <div class="tab" data-v="9">⑨ 跟在对话后面</div>
+    <div class="tab" data-v="10">⑩ 便签叠</div>
   </div>
 
   <p class="who">橘仔</p>
@@ -179,28 +169,47 @@
     <div class="bubble them">嗯。那你现在想干嘛？</div>
   </div>
 
-  <p class="hint" id="h1">下面那团<b>虚线气泡</b>本身就是输入区。打完字点「说出口」，它真的会变成一条真气泡接到上面去；点「算了」它就淡回去。</p>
+  <p class="hint" id="h1">下面那团<b>虚线气泡</b>本身就是输入区。打完点「说出口」，它真的会变成真气泡接到上面去；点「算了」就淡回去。</p>
   <p class="hint hide" id="h2">这一版<b>没有框</b>。只有一根橘色光标在闪——点一下就开始写，字打出来才看得见。</p>
   <p class="hint hide" id="h3">点一下下面那条线，字会自己长出来。边框只在聚焦时亮。</p>
   <p class="hint hide" id="h4">整颗胶囊是一个整体，按钮长在里面，不另外占地方。</p>
-  <p class="hint hide" id="h5">磨砂是真的磨砂——试着上下滑这条聊天，背景会从它后面透过去。</p>
+  <p class="hint hide" id="h5">磨砂是真的磨砂——上下滑这段聊天，背景会从它后面透过去。</p>
+  <p class="hint hide" id="h9">看这条线：它<b>不是浮在屏幕上的控件</b>，是这段对话的最后一行。发一条，它就往下让一格——你写的话永远长在纸上，不长在玻璃上。</p>
+  <p class="hint hide" id="h10">打一句，按<b>＋</b>把它钉成一张便签（框子清空，能接着写第二句）。想发哪张点哪张，不想留点 ×。</p>
+
+  <!-- ⑨ 跟在对话后面（文档流里） -->
+  <div id="v9" class="p9 hide">
+    <div class="p9-stream" id="p9stream"></div>
+    <div class="p9-line">
+      <textarea rows="1" placeholder="写在纸上…"></textarea>
+      <div class="send">↑</div>
+    </div>
+    <div class="p9-tail">—— 这一段还在长，猫等着</div>
+  </div>
+
+  <!-- ⑩ 便签叠（文档流里） -->
+  <div id="v10" class="hide">
+    <div class="empty-tip" id="emptyTip">还没有攒下的话。</div>
+    <div class="notes" id="notes"></div>
+    <div class="n-input">
+      <textarea rows="1" placeholder="想说的话，先钉着…"></textarea>
+      <div class="n-add">＋</div>
+      <div class="n-send">↑</div>
+    </div>
+  </div>
 </div>
 
 <div class="composer">
   <div class="inner">
-
-    <!-- ① 半成品气泡 -->
+    <!-- ① -->
     <div id="v1">
-      <div class="ghost-wrap">
-        <div class="ghost" contenteditable="true" spellcheck="false"></div>
-        <div class="ghost-tools" id="gt">
-          <div class="gbtn" id="gCancel">算了</div>
-          <div class="gbtn go" id="gSend">说出口</div>
-        </div>
+      <div class="ghost" contenteditable="true" spellcheck="false"></div>
+      <div class="ghost-tools" id="gt">
+        <div class="gbtn" id="gCancel">算了</div>
+        <div class="gbtn go" id="gSend">说出口</div>
       </div>
     </div>
-
-    <!-- ② 只有光标 -->
+    <!-- ② -->
     <div id="v2" class="hide">
       <div class="cursor-zone">
         <div class="idle-dot" id="dot"></div>
@@ -208,16 +217,14 @@
         <div class="send" id="csend">↑</div>
       </div>
     </div>
-
-    <!-- ③ 无边框 -->
+    <!-- ③ -->
     <div id="v3" class="hide">
       <div class="v1">
         <textarea rows="1" placeholder="说点什么…"></textarea>
         <div class="send">↑</div>
       </div>
     </div>
-
-    <!-- ④ 药丸 -->
+    <!-- ④ -->
     <div id="v4" class="hide">
       <div class="v2">
         <textarea rows="1" placeholder="说点什么…"></textarea>
@@ -225,103 +232,119 @@
         <div class="send">↑</div>
       </div>
     </div>
-
-    <!-- ⑤ 玻璃 -->
+    <!-- ⑤ -->
     <div id="v5" class="hide">
       <div class="v3">
         <textarea rows="1" placeholder="说点什么…"></textarea>
         <div class="send">↑</div>
       </div>
     </div>
-
   </div>
 </div>
 
 <script>
-const tabs=[...document.querySelectorAll('.tab')];
-const panes={1:document.getElementById('v1'),2:document.getElementById('v2'),3:document.getElementById('v3'),4:document.getElementById('v4'),5:document.getElementById('v5')};
-const hints={1:document.getElementById('h1'),2:document.getElementById('h2'),3:document.getElementById('h3'),4:document.getElementById('h4'),5:document.getElementById('h5')};
-tabs.forEach(t=>t.addEventListener('click',()=>{
-  const v=t.dataset.v;
-  tabs.forEach(x=>x.classList.toggle('on',x===t));
-  Object.keys(panes).forEach(k=>panes[k].classList.toggle('hide',k!==v));
-  Object.keys(hints).forEach(k=>hints[k].classList.toggle('hide',k!==v));
-}));
-
-/* ───── ① 半成品气泡 ───── */
-const ghost=document.querySelector('.ghost');
-const gt=document.getElementById('gt');
 const stream=document.getElementById('stream');
-function ghostRefresh(){
-  const has=ghost.innerText.trim().length>0;
-  gt.classList.toggle('on',has);
+const tabs=[...document.querySelectorAll('.tab')];
+const panes={1:'v1',2:'v2',3:'v3',4:'v4',5:'v5',9:'v9',10:'v10'};
+const hints={1:'h1',2:'h2',3:'h3',4:'h4',5:'h5',9:'h9',10:'h10'};
+
+function show(v){
+  tabs.forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  Object.entries(panes).forEach(([k,id])=>document.getElementById(id).classList.toggle('hide',k!==v));
+  Object.entries(hints).forEach(([k,id])=>document.getElementById(id).classList.toggle('hide',k!==v));
+  document.body.classList.toggle('inline', v==='9'||v==='10');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-ghost.addEventListener('input',ghostRefresh);
-ghost.addEventListener('focus',()=>{setTimeout(()=>ghost.scrollIntoView({block:'center',behavior:'smooth'}),260)});
-document.getElementById('gSend').addEventListener('click',()=>{
-  const txt=ghost.innerText.trim();
-  if(!txt) return;
+tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.v)));
+
+function push(text){
   const b=document.createElement('div');
-  b.className='bubble me fresh';
-  b.textContent=txt;
+  b.className='bubble me fresh'; b.textContent=text;
   stream.appendChild(b);
-  ghost.innerText='';
-  ghostRefresh();
   b.scrollIntoView({block:'nearest',behavior:'smooth'});
-});
-document.getElementById('gCancel').addEventListener('click',()=>{
-  ghost.innerText=''; ghostRefresh(); ghost.blur();
-});
-
-/* ───── ② 只有光标 ───── */
-function wireSimple(root){
-  const ta=root.querySelector('textarea');
-  const send=root.querySelector('.send');
-  if(!ta||!send) return;
-  const fit=()=>{
-    ta.style.height='auto';
-    ta.style.height=Math.min(ta.scrollHeight,120)+'px';
-    const has=ta.value.trim().length>0;
-    send.classList.toggle('live',has);
-    send.classList.toggle('on',has);
-  };
-  ta.addEventListener('input',fit);
-  ta.addEventListener('focus',()=>{setTimeout(()=>ta.scrollIntoView({block:'center',behavior:'smooth'}),260)});
-  ta.addEventListener('blur',fit);
-  send.addEventListener('click',()=>{
-    const txt=ta.value.trim(); if(!txt) return;
-    const b=document.createElement('div');
-    b.className='bubble me fresh'; b.textContent=txt;
-    stream.appendChild(b);
-    ta.value=''; fit();
-  });
-  fit();
 }
-['v3','v4','v5'].forEach(id=>wireSimple(document.getElementById(id)));
 
-const cz=document.querySelector('#v2 .cursor-zone');
-const cta=cz.querySelector('textarea');
-const csend=document.getElementById('csend');
-const dot=document.getElementById('dot');
-function cursorFit(){
-  cta.style.height='auto';
-  cta.style.height=Math.min(cta.scrollHeight,120)+'px';
+/* ① 半成品气泡 */
+const ghost=document.querySelector('.ghost'), gt=document.getElementById('gt');
+function gRefresh(){ gt.classList.toggle('on', ghost.innerText.trim().length>0); }
+ghost.addEventListener('input',gRefresh);
+ghost.addEventListener('focus',()=>setTimeout(()=>ghost.scrollIntoView({block:'center',behavior:'smooth'}),260));
+document.getElementById('gSend').addEventListener('click',()=>{
+  const t=ghost.innerText.trim(); if(!t) return;
+  push(t); ghost.innerText=''; gRefresh();
+});
+document.getElementById('gCancel').addEventListener('click',()=>{ghost.innerText='';gRefresh();ghost.blur();});
+
+/* ② 只有光标 */
+const cz=document.querySelector('#v2 .cursor-zone'), cta=cz.querySelector('textarea');
+const csend=document.getElementById('csend'), dot=document.getElementById('dot');
+function cFit(){
+  cta.style.height='auto'; cta.style.height=Math.min(cta.scrollHeight,120)+'px';
   const has=cta.value.trim().length>0;
   csend.classList.toggle('on',has);
   dot.classList.toggle('hide',has||document.activeElement===cta);
-  if(!has) dot.style.left='0';
 }
-cta.addEventListener('input',cursorFit);
-cta.addEventListener('focus',()=>{dot.classList.add('hide')});
-cta.addEventListener('blur',cursorFit);
-cta.addEventListener('focus',()=>{setTimeout(()=>{cta.scrollIntoView({block:'center',behavior:'smooth'})},260)});
-csend.addEventListener('click',()=>{
-  const txt=cta.value.trim(); if(!txt) return;
+cta.addEventListener('input',cFit);
+cta.addEventListener('focus',()=>{dot.classList.add('hide');setTimeout(()=>cta.scrollIntoView({block:'center',behavior:'smooth'}),260)});
+cta.addEventListener('blur',cFit);
+csend.addEventListener('click',()=>{const t=cta.value.trim();if(!t)return;push(t);cta.value='';cFit();});
+cFit();
+
+/* ③④⑤ 通用 */
+function wire(id){
+  const root=document.getElementById(id), ta=root.querySelector('textarea'), s=root.querySelector('.send');
+  const fit=()=>{ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,120)+'px';s.classList.toggle('live',ta.value.trim().length>0);};
+  ta.addEventListener('input',fit);
+  ta.addEventListener('focus',()=>setTimeout(()=>ta.scrollIntoView({block:'center',behavior:'smooth'}),260));
+  s.addEventListener('click',()=>{const t=ta.value.trim();if(!t)return;push(t);ta.value='';fit();});
+  fit();
+}
+['v3','v4','v5'].forEach(wire);
+
+/* ⑨ 跟在对话后面 */
+const p9s=document.getElementById('p9stream');
+p9s.innerHTML=`<div class="bubble them">外面天阴着，窗台的灯猫留着呢。</div>
+<div class="bubble me">刚洗完澡，头发还在滴水。</div>
+<div class="bubble them">先擦干。头发湿着坐一会儿就容易头疼，别不当回事。</div>`;
+const p9ta=document.querySelector('#v9 textarea'), p9send=document.querySelector('#v9 .send');
+function p9fit(){p9ta.style.height='auto';p9ta.style.height=Math.min(p9ta.scrollHeight,120)+'px';p9send.classList.toggle('live',p9ta.value.trim().length>0);}
+p9ta.addEventListener('input',p9fit);
+p9send.addEventListener('click',()=>{
+  const t=p9ta.value.trim(); if(!t) return;
   const b=document.createElement('div');
-  b.className='bubble me fresh'; b.textContent=txt;
-  stream.appendChild(b); cta.value=''; cursorFit();
+  b.className='bubble me fresh'; b.textContent=t;
+  p9s.appendChild(b);
+  p9ta.value=''; p9fit();
+  b.scrollIntoView({block:'nearest',behavior:'smooth'});
 });
-cursorFit();
+p9fit();
+
+/* ⑩ 便签叠 */
+const notesEl=document.getElementById('notes');
+const emptyTip=document.getElementById('emptyTip');
+const nta=document.querySelector('#v10 textarea');
+const nAdd=document.querySelector('#v10 .n-add');
+const nSend=document.querySelector('#v10 .n-send');
+function nFit(){nta.style.height='auto';nta.style.height=Math.min(nta.scrollHeight,110)+'px';nSend.classList.toggle('live',nta.value.trim().length>0);}
+function nSync(){emptyTip.classList.toggle('hide',notesEl.children.length>0);}
+function addNote(text){
+  const d=document.createElement('div');
+  d.className='note';
+  const span=document.createElement('span'); span.textContent=text;
+  const del=document.createElement('div'); del.className='del'; del.textContent='×';
+  d.appendChild(span); d.appendChild(del);
+  del.addEventListener('click',e=>{e.stopPropagation();d.remove();nSync();});
+  d.addEventListener('click',()=>{push(text);d.remove();nSync();});
+  notesEl.appendChild(d); nSync();
+}
+nAdd.addEventListener('click',()=>{const t=nta.value.trim();if(!t)return;addNote(t);nta.value='';nFit();});
+nta.addEventListener('input',nFit);
+nta.addEventListener('focus',()=>setTimeout(()=>nta.scrollIntoView({block:'center',behavior:'smooth'}),260));
+nSend.addEventListener('click',()=>{const t=nta.value.trim();if(!t)return;push(t);nta.value='';nFit();});
+nSync();
+
+/* 切换时同步 fixed/文档流 */
+show('1');
 </script>
 </body>
 </html>
