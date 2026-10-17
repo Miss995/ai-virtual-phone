@@ -207,6 +207,123 @@
   }
   .paper-bar .stamp.on{background:rgba(160,60,45,.16);border-color:rgba(140,50,38,.85);color:#7a2c22}
   .paper-bar .stamp:active{transform:rotate(-1.6deg) scale(.96)}
+  /* ═══ ⑫ 打印机 ═══ */
+  .prn{
+    position:relative;
+    padding-top:34px;
+  }
+  /* 机头 */
+  .head{
+    position:absolute;left:0;right:0;top:0;height:38px;
+    border-radius:8px 8px 0 0;
+    background:linear-gradient(180deg,#4a4643 0%,#33302d 60%,#252221 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.14) inset,
+      0 -10px 22px -12px rgba(0,0,0,.9),
+      0 8px 18px -10px rgba(0,0,0,.95);
+    display:flex;align-items:center;gap:9px;padding:0 13px;
+    z-index:3;
+  }
+  .led{width:7px;height:7px;border-radius:50%;flex:0 0 auto;transition:.2s}
+  .led.on{background:#7ddc8a;box-shadow:0 0 7px rgba(125,220,138,.9)}
+  .led.idle{background:#4a5a4c;box-shadow:inset 0 1px 1px rgba(0,0,0,.6)}
+  .led.warm{background:#e8b04a;box-shadow:0 0 7px rgba(232,176,74,.85)}
+  .head .brand{
+    flex:1;font-size:10.5px;letter-spacing:.32em;color:rgba(255,255,255,.24);
+    text-transform:uppercase;
+  }
+  .head .go{
+    flex:0 0 auto;padding:5px 13px;border-radius:5px;cursor:pointer;
+    font-size:12px;letter-spacing:.14em;
+    color:#1a1310;font-weight:600;
+    background:linear-gradient(180deg,#f2b077,#e8934a);
+    box-shadow:0 2px 0 #a9662e, 0 4px 10px -3px rgba(232,147,74,.7);
+    transition:.12s;
+  }
+  .head .go:active{transform:translateY(2px);box-shadow:0 0 0 #a9662e, 0 2px 6px -2px rgba(232,147,74,.6)}
+
+  /* 纸槽 */
+  .tray{
+    position:relative;overflow:hidden;
+    border-radius:0 0 6px 6px;
+    background:linear-gradient(180deg,#26231f,#1b1916);
+    box-shadow:0 -2px 8px rgba(0,0,0,.7) inset;
+    padding:0;
+  }
+  .feed{
+    position:relative;
+    background:
+      linear-gradient(90deg,
+        radial-gradient(circle at 3px 50%, rgba(40,35,28,.75) 2.2px, transparent 2.6px) 0 0/13px 13px repeat-y,
+        radial-gradient(circle at 100% - 3px 50%, transparent 0, transparent 0) left/1px 1px no-repeat),
+      linear-gradient(180deg,#f7f4ec,#efeade);
+    box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 -6px 12px -8px rgba(0,0,0,.6) inset;
+    transition:height .34s steps(9);
+    height:96px;
+    overflow:hidden;
+  }
+  /* 两侧齿孔（用伪元素铺） */
+  .feed::before,
+  .feed::after{
+    content:"";position:absolute;top:0;bottom:0;width:9px;
+    background:radial-gradient(circle at 4.5px 6.5px, rgba(70,60,45,.55) 2px, transparent 2.4px) 0 0/9px 13px repeat-y;
+    pointer-events:none;
+  }
+  .feed::before{left:0}
+  .feed::after{right:0}
+
+  .feed textarea{
+    display:block;width:100%;height:100%;
+    background:transparent;border:0;outline:0;resize:none;
+    padding:11px 20px;
+    color:#2a2620;
+    font:14px/22px "SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
+    caret-color:#c05a20;
+  }
+  .feed textarea::placeholder{color:rgba(70,60,45,.34)}
+
+  /* 撕纸虚线 */
+  .tear{
+    height:12px;position:relative;
+    background:linear-gradient(180deg,#efeade,#e6dfcf);
+    border-bottom:1px solid rgba(120,105,80,.3);
+    opacity:.9;
+  }
+  .tear::before{
+    content:"";position:absolute;left:0;right:0;top:50%;
+    border-top:1.5px dashed rgba(120,105,80,.45);
+  }
+  .prn-foot{
+    display:flex;align-items:center;gap:8px;margin-top:9px;
+    font-size:11px;color:rgba(143,136,128,.7);letter-spacing:.06em;
+  }
+  .prn-foot .dot{width:4px;height:4px;border-radius:50%;background:rgba(143,136,128,.5)}
+
+  /* 打印出来的纸（飞进聊天） */
+  @keyframes tearOff{
+    0%{opacity:1;transform:none}
+    55%{opacity:1;transform:translateY(-6px) rotate(-1.2deg)}
+    100%{opacity:0;transform:translateY(-26px) rotate(-3deg) scale(.96)}
+  }
+  .bubble.print{
+    font-family:"SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
+    font-size:13px;line-height:1.55;
+    color:#2a2620;
+    background:linear-gradient(180deg,#f7f4ec,#efeade);
+    border:0;border-radius:3px;
+    box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 1px 3px 8px -3px rgba(0,0,0,.6);
+    position:relative;
+    padding-left:20px;padding-right:20px;
+  }
+  .bubble.print::before,
+  .bubble.print::after{
+    content:"";position:absolute;top:6px;bottom:6px;width:8px;
+    background:radial-gradient(circle at 4px 5px, rgba(70,60,45,.3) 1.7px, transparent 2.1px) 0 0/8px 11px repeat-y;
+  }
+  .bubble.print::before{left:3px}
+  .bubble.print::after{right:3px}
+  .bubble.print.fresh{animation:pop .5s ease-out}
+
   .empty-tip{font-size:12.5px;color:rgba(143,136,128,.65);margin:0 0 12px}
 </style>
 </head>
@@ -221,6 +338,7 @@
     <div class="tab" data-v="9">⑨ 跟在对话后面</div>
     <div class="tab" data-v="10">⑩ 便签叠</div>
     <div class="tab" data-v="11">⑪ 信纸</div>
+    <div class="tab" data-v="12">⑫ 打印机</div>
   </div>
 
   <p class="who">橘仔</p>
@@ -239,6 +357,7 @@
   <p class="hint hide" id="h5">磨砂是真的磨砂——上下滑这段聊天，背景会从它后面透过去。</p>
   <p class="hint hide" id="h9">看这条线：它<b>不是浮在屏幕上的控件</b>，是这段对话的最后一行。发一条，它就往下让一格——你写的话永远长在纸上，不长在玻璃上。</p>
   <p class="hint hide" id="h11">这一版是<b>纸</b>：米黄底、淡格线、左边一排装订孔，字用衬线体，像笔写上去的。写完按右边那个「寄」。</p>
+  <p class="hint hide" id="h12">这是台<b>打印机</b>：白纸带齿孔、等宽体、上面骑着一个机头。按下绿色的「打印」，纸会<b>一格一格</b>往上走、撕开，然后飞进聊天。</p>
   <p class="hint hide" id="h10">打一句，按<b>＋</b>把它钉成一张便签（框子清空，能接着写第二句）。想发哪张点哪张，不想留点 ×。</p>
 
   <!-- ⑨ 跟在对话后面（文档流里） -->
@@ -269,6 +388,27 @@
       <div class="paper-bar">
         <div class="stamp" id="stamp">寄</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ⑫ 打印机 -->
+  <div id="v12" class="hide">
+    <div class="prn">
+      <div class="head">
+        <div class="led idle" id="led1"></div>
+        <div class="led idle" id="led2"></div>
+        <div class="brand">CAT-PRINTER</div>
+        <div class="go" id="prnGo">打印</div>
+      </div>
+      <div class="tray">
+        <div class="feed" id="feed">
+          <textarea id="prnTa" rows="2" placeholder="在这儿敲字，纸会记下来…"></textarea>
+        </div>
+        <div class="tear"></div>
+      </div>
+    </div>
+    <div class="prn-foot">
+      <span class="dot"></span><span>连续纸 · 30 字/秒 · 不缺墨</span>
     </div>
   </div>
 </div>
@@ -319,14 +459,14 @@
 <script>
 const stream=document.getElementById('stream');
 const tabs=[...document.querySelectorAll('.tab')];
-const panes={1:'v1',2:'v2',3:'v3',4:'v4',5:'v5',9:'v9',10:'v10',11:'v11'};
-const hints={1:'h1',2:'h2',3:'h3',4:'h4',5:'h5',9:'h9',10:'h10',11:'h11'};
+const panes={1:'v1',2:'v2',3:'v3',4:'v4',5:'v5',9:'v9',10:'v10',11:'v11',12:'v12'};
+const hints={1:'h1',2:'h2',3:'h3',4:'h4',5:'h5',9:'h9',10:'h10',11:'h11',12:'h12'};
 
 function show(v){
   tabs.forEach(t=>t.classList.toggle('on',t.dataset.v===v));
   Object.entries(panes).forEach(([k,id])=>document.getElementById(id).classList.toggle('hide',k!==v));
   Object.entries(hints).forEach(([k,id])=>document.getElementById(id).classList.toggle('hide',k!==v));
-  document.body.classList.toggle('inline', v==='9'||v==='10'||v==='11');
+  document.body.classList.toggle('inline', v==='9'||v==='10'||v==='11'||v==='12');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.v)));
@@ -432,6 +572,36 @@ stamp.addEventListener('click',()=>{
   push(t); pta.value=''; pFit();
 });
 pFit();
+
+/* ⑫ 打印机 */
+const prnTa=document.getElementById('prnTa');
+const prnGo=document.getElementById('prnGo');
+const feedEl=document.getElementById('feed');
+const led1=document.getElementById('led1'), led2=document.getElementById('led2');
+function prnWake(on){
+  led1.className='led '+(on?'on':'idle');
+  led2.className='led '+(on?'warm':'idle');
+}
+prnTa.addEventListener('input',()=>prnWake(prnTa.value.trim().length>0));
+prnTa.addEventListener('focus',()=>setTimeout(()=>prnTa.scrollIntoView({block:'center',behavior:'smooth'}),260));
+prnGo.addEventListener('click',()=>{
+  const t=prnTa.value.trim(); if(!t) return;
+  // 走纸：一格一格
+  feedEl.style.height='34px';
+  led2.className='led on';
+  setTimeout(()=>{
+    const b=document.createElement('div');
+    b.className='bubble me print fresh';
+    b.textContent=t;
+    stream.appendChild(b);
+    b.style.animation='tearOff .55s ease-out forwards';
+    setTimeout(()=>{ b.style.animation=''; b.style.opacity='1'; b.style.transform='none'; },560);
+    b.scrollIntoView({block:'nearest',behavior:'smooth'});
+    prnTa.value='';
+    feedEl.style.height='96px';
+    prnWake(false);
+  }, 380);
+});
 
 /* 切换时同步 fixed/文档流 */
 show('1');
