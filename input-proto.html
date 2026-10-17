@@ -207,122 +207,198 @@
   }
   .paper-bar .stamp.on{background:rgba(160,60,45,.16);border-color:rgba(140,50,38,.85);color:#7a2c22}
   .paper-bar .stamp:active{transform:rotate(-1.6deg) scale(.96)}
-  /* ═══ ⑫ 打印机 ═══ */
-  .prn{
+  /* ═══ ⑫ 打印机（屏幕版） ═══ */
+  .mach{
     position:relative;
-    padding-top:34px;
-  }
-  /* 机头 */
-  .head{
-    position:absolute;left:0;right:0;top:0;height:38px;
-    border-radius:8px 8px 0 0;
-    background:linear-gradient(180deg,#4a4643 0%,#33302d 60%,#252221 100%);
+    border-radius:14px;
+    padding:0;
+    background:linear-gradient(180deg,#3d3936 0%,#312d2a 34%,#282421 72%,#221f1c 100%);
     box-shadow:
-      0 1px 0 rgba(255,255,255,.14) inset,
-      0 -10px 22px -12px rgba(0,0,0,.9),
-      0 8px 18px -10px rgba(0,0,0,.95);
-    display:flex;align-items:center;gap:9px;padding:0 13px;
-    z-index:3;
+      0 1px 0 rgba(255,255,255,.17) inset,
+      0 -3px 0 rgba(0,0,0,.45) inset,
+      0 16px 34px -16px rgba(0,0,0,.95),
+      0 4px 12px -8px rgba(0,0,0,.9);
+  }
+  /* 顶部散热 */
+  .mach-top{
+    display:flex;align-items:center;gap:9px;
+    padding:9px 12px 7px;
+  }
+  .vents{
+    flex:1;height:4px;border-radius:2px;
+    background:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 3px, rgba(255,255,255,.05) 3px 6px);
+    box-shadow:0 1px 0 rgba(255,255,255,.06);
   }
   .led{width:7px;height:7px;border-radius:50%;flex:0 0 auto;transition:.2s}
-  .led.on{background:#7ddc8a;box-shadow:0 0 7px rgba(125,220,138,.9)}
-  .led.idle{background:#4a5a4c;box-shadow:inset 0 1px 1px rgba(0,0,0,.6)}
-  .led.warm{background:#e8b04a;box-shadow:0 0 7px rgba(232,176,74,.85)}
-  .head .brand{
-    flex:1;font-size:10.5px;letter-spacing:.32em;color:rgba(255,255,255,.24);
-    text-transform:uppercase;
-  }
-  .head .go{
-    flex:0 0 auto;padding:5px 13px;border-radius:5px;cursor:pointer;
-    font-size:12px;letter-spacing:.14em;
-    color:#1a1310;font-weight:600;
-    background:linear-gradient(180deg,#f2b077,#e8934a);
-    box-shadow:0 2px 0 #a9662e, 0 4px 10px -3px rgba(232,147,74,.7);
-    transition:.12s;
-  }
-  .head .go:active{transform:translateY(2px);box-shadow:0 0 0 #a9662e, 0 2px 6px -2px rgba(232,147,74,.6)}
+  .led.on{background:#7ddc8a;box-shadow:0 0 8px rgba(125,220,138,.95)}
+  .led.idle{background:#3f4a41;box-shadow:inset 0 1px 1px rgba(0,0,0,.7)}
+  .led.warm{background:#e8b04a;box-shadow:0 0 8px rgba(232,176,74,.9)}
 
-  /* 纸槽 */
-  .tray{
-    position:relative;overflow:hidden;
-    border-radius:0 0 6px 6px;
-    background:linear-gradient(180deg,#26231f,#1b1916);
-    box-shadow:0 -2px 8px rgba(0,0,0,.7) inset;
-    padding:0;
+  /* 屏幕框 */
+  .bezel{
+    margin:0 9px;
+    padding:5px;
+    border-radius:9px;
+    background:linear-gradient(180deg,#1a1715,#141210);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.07),
+      0 1px 0 rgba(255,255,255,.06);
   }
-  .feed{
+  .lcd{
     position:relative;
-    background:
-      linear-gradient(90deg,
-        radial-gradient(circle at 3px 50%, rgba(40,35,28,.75) 2.2px, transparent 2.6px) 0 0/13px 13px repeat-y,
-        radial-gradient(circle at 100% - 3px 50%, transparent 0, transparent 0) left/1px 1px no-repeat),
-      linear-gradient(180deg,#f7f4ec,#efeade);
-    box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 -6px 12px -8px rgba(0,0,0,.6) inset;
-    transition:height .34s steps(9);
-    height:96px;
+    border-radius:6px;
+    background:linear-gradient(168deg,#0d1a14 0%,#122019 52%,#0a1210 100%);
+    box-shadow:
+      inset 0 2px 12px rgba(0,0,0,.92),
+      inset 0 0 30px rgba(60,200,140,.07);
     overflow:hidden;
   }
-  /* 两侧齿孔（用伪元素铺） */
-  .feed::before,
-  .feed::after{
-    content:"";position:absolute;top:0;bottom:0;width:9px;
-    background:radial-gradient(circle at 4.5px 6.5px, rgba(70,60,45,.55) 2px, transparent 2.4px) 0 0/9px 13px repeat-y;
+  /* 扫描线 */
+  .lcd::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.038) 0 1px, transparent 1px 3px);
+  }
+  /* 斜向反光（折射那味） */
+  .lcd::after{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:
+      linear-gradient(127deg, rgba(255,255,255,.17) 0%, rgba(255,255,255,.06) 20%, transparent 44%),
+      radial-gradient(120% 60% at 82% 0%, rgba(160,255,210,.10), transparent 62%);
+  }
+  .lcd textarea{
+    position:relative;z-index:1;
+    display:block;width:100%;
+    background:transparent;border:0;outline:0;resize:none;
+    padding:11px 14px;
+    color:#8ef0bc;
+    text-shadow:0 0 9px rgba(110,240,180,.6);
+    font:14px/22px "SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
+    caret-color:#a8ffd0;
+    max-height:112px;
+  }
+  .lcd textarea::placeholder{color:rgba(140,220,180,.26)}
+
+  /* 按键区 */
+  .deck{
+    display:flex;align-items:center;gap:9px;
+    padding:9px 12px 8px;
+  }
+  .deck .tag{
+    flex:1;font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.22);
+  }
+  .deck .go{
+    flex:0 0 auto;padding:6px 15px;border-radius:5px;cursor:pointer;
+    font-size:12px;letter-spacing:.14em;color:#1a1310;font-weight:600;
+    background:linear-gradient(180deg,#f2b077,#e8934a);
+    box-shadow:0 2px 0 #a9662e, 0 5px 12px -4px rgba(232,147,74,.75);
+    transition:.12s;
+  }
+  .deck .go:active{transform:translateY(2px);box-shadow:0 0 0 #a9662e, 0 2px 6px -2px rgba(232,147,74,.6)}
+
+  /* 底部纸仓接缝 */
+  .mach-base{
+    height:9px;margin:0 6px 4px;
+    border-radius:0 0 10px 10px;
+    background:linear-gradient(180deg,#1d1a18,#2a2623);
+    box-shadow:0 -1px 0 rgba(255,255,255,.05), 0 3px 8px -4px rgba(0,0,0,.9);
+  }
+
+  /* ── 贴在机器前脸的便利贴 ── */
+  .sticky-zone{position:relative;height:0}
+  .sticky{
+    position:absolute;right:14px;bottom:-6px;
+    width:104px;padding:9px 10px 11px;
+    font-size:11px;line-height:1.45;color:#4a3f2a;
+    background:
+      repeating-linear-gradient(180deg, rgba(120,95,40,.05) 0 1px, transparent 1px 5px),
+      linear-gradient(158deg,#f9ecae 0%,#f2e096 60%,#ebd685 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.6) inset,
+      2px 4px 10px -3px rgba(0,0,0,.8);
+    transform:rotate(-3.2deg);
+    border-radius:1px;
+    cursor:pointer;user-select:none;
+    transition:transform .2s, box-shadow .2s;
+    z-index:5;
+    max-height:66px;overflow:hidden;
+  }
+  .sticky::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:8px;
+    background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.05));
+  }
+  .sticky:active{transform:rotate(-1.5deg) scale(.97)}
+
+  /* 展开的便签（浮层） */
+  .sticky-layer{
+    position:fixed;inset:0;z-index:80;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(3px);
+    opacity:0;pointer-events:none;transition:.22s;
+  }
+  .sticky-layer.on{opacity:1;pointer-events:auto}
+  .sticky-card{
+    position:relative;
+    width:min(76vw,290px);
+    min-height:150px;
+    padding:22px 20px 20px;
+    color:#4a3f2a;font-size:14px;line-height:1.7;
+    background:
+      repeating-linear-gradient(180deg, rgba(120,95,40,.055) 0 1px, transparent 1px 6px),
+      linear-gradient(158deg,#faf0b4 0%,#f3e29a 58%,#ead786 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.65) inset,
+      3px 7px 22px -6px rgba(0,0,0,.85);
+    border-radius:2px;
+    transform:rotate(-1.8deg) scale(.94);
+    transition:transform .24s cubic-bezier(.34,1.4,.64,1);
+    touch-action:pan-y;
+    overflow:hidden;
+  }
+  .sticky-layer.on .sticky-card{transform:rotate(-1.8deg) scale(1)}
+  .sticky-card::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:13px;
+    background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.06));
+    border-bottom:1px solid rgba(150,120,50,.14);
+  }
+  /* 撕口：拖动时右边边缘发白起毛 */
+  .sticky-card .fray{
+    position:absolute;top:0;bottom:0;right:0;width:0;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.85));
+    box-shadow:2px 0 6px rgba(0,0,0,.3);
+    transition:width .08s linear;
+  }
+  .sticky-hint{
+    position:absolute;left:0;right:0;bottom:16px;text-align:center;
+    font-size:11px;color:rgba(120,105,70,.7);letter-spacing:.1em;
     pointer-events:none;
   }
-  .feed::before{left:0}
-  .feed::after{right:0}
-
-  .feed textarea{
-    display:block;width:100%;height:100%;
-    background:transparent;border:0;outline:0;resize:none;
-    padding:11px 20px;
-    color:#2a2620;
-    font:14px/22px "SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
-    caret-color:#c05a20;
-  }
-  .feed textarea::placeholder{color:rgba(70,60,45,.34)}
-
-  /* 撕纸虚线 */
-  .tear{
-    height:12px;position:relative;
-    background:linear-gradient(180deg,#efeade,#e6dfcf);
-    border-bottom:1px solid rgba(120,105,80,.3);
-    opacity:.9;
-  }
-  .tear::before{
-    content:"";position:absolute;left:0;right:0;top:50%;
-    border-top:1.5px dashed rgba(120,105,80,.45);
-  }
-  .prn-foot{
-    display:flex;align-items:center;gap:8px;margin-top:9px;
-    font-size:11px;color:rgba(143,136,128,.7);letter-spacing:.06em;
-  }
-  .prn-foot .dot{width:4px;height:4px;border-radius:50%;background:rgba(143,136,128,.5)}
-
-  /* 打印出来的纸（飞进聊天） */
+  /* 撕下后的纸（飞进聊天） */
   @keyframes tearOff{
-    0%{opacity:1;transform:none}
-    55%{opacity:1;transform:translateY(-6px) rotate(-1.2deg)}
-    100%{opacity:0;transform:translateY(-26px) rotate(-3deg) scale(.96)}
+    0%{opacity:1;transform:translateY(-4px) rotate(-1.2deg) scale(.98)}
+    55%{opacity:1;transform:translateY(-10px) rotate(1.6deg) scale(1)}
+    100%{opacity:0;transform:translateY(-34px) rotate(4deg) scale(.9)}
   }
-  .bubble.print{
+  .bubble.me.print{
     font-family:"SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
-    font-size:13px;line-height:1.55;
-    color:#2a2620;
-    background:linear-gradient(180deg,#f7f4ec,#efeade);
-    border:0;border-radius:3px;
-    box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 1px 3px 8px -3px rgba(0,0,0,.6);
+    font-size:13px;line-height:1.6;
+    color:#4a3f2a;
+    background:
+      repeating-linear-gradient(180deg, rgba(120,95,40,.05) 0 1px, transparent 1px 6px),
+      linear-gradient(158deg,#faf0b4,#f0dd93);
+    border:0;border-radius:2px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.7) inset,
+      2px 5px 14px -5px rgba(0,0,0,.8);
     position:relative;
-    padding-left:20px;padding-right:20px;
+    padding:12px 14px;
+    transform:rotate(-.5deg);
   }
-  .bubble.print::before,
-  .bubble.print::after{
-    content:"";position:absolute;top:6px;bottom:6px;width:8px;
-    background:radial-gradient(circle at 4px 5px, rgba(70,60,45,.3) 1.7px, transparent 2.1px) 0 0/8px 11px repeat-y;
+  .bubble.me.print::after{
+    content:"";position:absolute;right:-1px;top:0;bottom:0;width:5px;
+    background:linear-gradient(90deg, rgba(0,0,0,.06), rgba(255,255,255,.5));
+    border-left:1px dashed rgba(150,120,50,.35);
   }
-  .bubble.print::before{left:3px}
-  .bubble.print::after{right:3px}
-  .bubble.print.fresh{animation:pop .5s ease-out}
 
   .empty-tip{font-size:12.5px;color:rgba(143,136,128,.65);margin:0 0 12px}
 </style>
@@ -391,24 +467,28 @@
     </div>
   </div>
 
-  <!-- ⑫ 打印机 -->
-  <div id="v12" class="hide">
-    <div class="prn">
-      <div class="head">
+  <!-- ⑫ 打印机（屏幕版） -->
+  <div id="v12" class="hide" style="padding-bottom:76px">
+    <div class="mach">
+      <div class="mach-top">
         <div class="led idle" id="led1"></div>
         <div class="led idle" id="led2"></div>
-        <div class="brand">CAT-PRINTER</div>
+        <div class="vents"></div>
+      </div>
+      <div class="bezel">
+        <div class="lcd">
+          <textarea id="prnTa" rows="2" placeholder="在这儿敲字，屏幕会亮…"></textarea>
+        </div>
+      </div>
+      <div class="deck">
+        <div class="tag">CAT-PRINTER · MODEL Ⅶ</div>
+        <div class="pin" id="prnPin" style="flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;cursor:pointer;font-size:18px;line-height:1;color:rgba(255,255,255,.55);background:rgba(255,255,255,.07);box-shadow:0 1px 0 rgba(255,255,255,.1) inset,0 2px 0 rgba(0,0,0,.35);transition:.12s">＋</div>
         <div class="go" id="prnGo">打印</div>
       </div>
-      <div class="tray">
-        <div class="feed" id="feed">
-          <textarea id="prnTa" rows="2" placeholder="在这儿敲字，纸会记下来…"></textarea>
-        </div>
-        <div class="tear"></div>
+      <div class="mach-base"></div>
+      <div class="sticky-zone">
+        <div class="sticky hide" id="stk"></div>
       </div>
-    </div>
-    <div class="prn-foot">
-      <span class="dot"></span><span>连续纸 · 30 字/秒 · 不缺墨</span>
     </div>
   </div>
 </div>
@@ -573,38 +653,95 @@ stamp.addEventListener('click',()=>{
 });
 pFit();
 
-/* ⑫ 打印机 */
+/* ⑫ 打印机（屏幕版） */
 const prnTa=document.getElementById('prnTa');
 const prnGo=document.getElementById('prnGo');
-const feedEl=document.getElementById('feed');
+const prnPin=document.getElementById('prnPin');
 const led1=document.getElementById('led1'), led2=document.getElementById('led2');
+const stk=document.getElementById('stk');
+const stkLayer=document.getElementById('stkLayer');
+const stkCard=document.getElementById('stkCard');
+const stkText=document.getElementById('stkText');
+const fray=document.getElementById('fray');
+
+let pending='';
+
 function prnWake(on){
   led1.className='led '+(on?'on':'idle');
   led2.className='led '+(on?'warm':'idle');
 }
 prnTa.addEventListener('input',()=>prnWake(prnTa.value.trim().length>0));
 prnTa.addEventListener('focus',()=>setTimeout(()=>prnTa.scrollIntoView({block:'center',behavior:'smooth'}),260));
-prnGo.addEventListener('click',()=>{
+
+function tearOff(text){
+  const b=document.createElement('div');
+  b.className='bubble me print';
+  b.textContent=text;
+  stream.appendChild(b);
+  b.style.animation='tearOff .6s ease-out forwards';
+  setTimeout(()=>{ b.style.animation=''; b.style.opacity='1'; b.style.transform='rotate(-.5deg)'; },640);
+  b.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+prnPin.addEventListener('click',()=>{
   const t=prnTa.value.trim(); if(!t) return;
-  // 走纸：一格一格
-  feedEl.style.height='34px';
-  led2.className='led on';
-  setTimeout(()=>{
-    const b=document.createElement('div');
-    b.className='bubble me print fresh';
-    b.textContent=t;
-    stream.appendChild(b);
-    b.style.animation='tearOff .55s ease-out forwards';
-    setTimeout(()=>{ b.style.animation=''; b.style.opacity='1'; b.style.transform='none'; },560);
-    b.scrollIntoView({block:'nearest',behavior:'smooth'});
-    prnTa.value='';
-    feedEl.style.height='96px';
-    prnWake(false);
-  }, 380);
+  pending=t;
+  stk.textContent=t;
+  stk.classList.remove('hide');
+  prnTa.value=''; prnWake(false);
+});
+
+stk.addEventListener('click',()=>{
+  if(!pending) return;
+  stkText.textContent=pending;
+  stkLayer.classList.add('on');
+});
+
+let sx=0, dragging=false, dx=0;
+stkCard.addEventListener('pointerdown',e=>{
+  sx=e.clientX; dragging=true; dx=0;
+  try{ stkCard.setPointerCapture(e.pointerId); }catch(_){}
+});
+stkCard.addEventListener('pointermove',e=>{
+  if(!dragging) return;
+  dx=Math.max(0,e.clientX-sx);
+  stkCard.style.transition='none';
+  stkCard.style.transform='rotate(-1.8deg) translateX('+dx+'px)';
+  fray.style.width=Math.min(30,dx*0.42)+'px';
+});
+function endDrag(){
+  if(!dragging) return;
+  dragging=false;
+  stkCard.style.transition='transform .24s cubic-bezier(.34,1.4,.64,1)';
+  stkCard.style.transform='rotate(-1.8deg) scale(1)';
+  fray.style.width='0';
+  if(dx>88){
+    stkLayer.classList.remove('on');
+    const t=pending; pending='';
+    stk.classList.add('hide'); stk.textContent='';
+    setTimeout(()=>tearOff(t),170);
+  }
+}
+stkCard.addEventListener('pointerup',endDrag);
+stkCard.addEventListener('pointercancel',endDrag);
+
+stkLayer.addEventListener('click',e=>{ if(e.target===stkLayer) stkLayer.classList.remove('on'); });
+
+prnGo.addEventListener('click',()=>{
+  const t=prnTa.value.trim();
+  if(t){ prnTa.value=''; prnWake(false); tearOff(t); return; }
+  if(pending){ stkText.textContent=pending; stkLayer.classList.add('on'); }
 });
 
 /* 切换时同步 fixed/文档流 */
 show('1');
 </script>
+<div class="sticky-layer" id="stkLayer">
+  <div class="sticky-card" id="stkCard">
+    <div class="fray" id="fray"></div>
+    <span id="stkText"></span>
+    <div class="sticky-hint">往右滑 → 撕下来</div>
+  </div>
+</div>
 </body>
 </html>
