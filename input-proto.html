@@ -3,16 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>输入框 · 三个方向</title>
+<title>输入框 · 五个方向</title>
 <style>
   :root{
-    --bg0:#12100f;
-    --bg1:#1b1817;
-    --orange:#e8934a;
-    --orange-soft:#f2b077;
-    --txt:#efe9e3;
-    --txt-dim:#8f8880;
-    --hair:rgba(255,255,255,.10);
+    --bg0:#12100f; --orange:#e8934a; --orange-soft:#f2b077;
+    --txt:#efe9e3; --txt-dim:#8f8880; --hair:rgba(255,255,255,.10);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
@@ -25,236 +20,308 @@
     font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif;
     overflow-x:hidden;
   }
-  .wrap{max-width:520px;margin:0 auto;padding:18px 16px 60px}
+  .wrap{max-width:520px;margin:0 auto;padding:14px 16px 200px}
 
-  /* 顶部切换 */
   .tabs{
-    position:sticky;top:0;z-index:20;
-    display:flex;gap:8px;padding:10px 0 14px;
-    background:linear-gradient(180deg,var(--bg0) 55%,transparent);
+    position:sticky;top:0;z-index:40;
+    display:flex;gap:6px;padding:8px 0 12px;
+    background:linear-gradient(180deg,var(--bg0) 60%,transparent);
+    overflow-x:auto;scrollbar-width:none;
   }
+  .tabs::-webkit-scrollbar{display:none}
   .tab{
-    flex:1;text-align:center;padding:9px 6px;border-radius:12px;
-    font-size:13px;color:var(--txt-dim);
-    border:1px solid var(--hair);
-    background:rgba(255,255,255,.02);
-    transition:.18s;
-    cursor:pointer;user-select:none;
+    flex:0 0 auto;text-align:center;padding:8px 11px;border-radius:11px;
+    font-size:12px;color:var(--txt-dim);white-space:nowrap;
+    border:1px solid var(--hair);background:rgba(255,255,255,.02);
+    transition:.18s;cursor:pointer;
   }
   .tab.on{
     color:#1a1310;background:linear-gradient(180deg,var(--orange-soft),var(--orange));
     border-color:transparent;font-weight:600;
-    box-shadow:0 6px 20px -8px rgba(232,147,74,.75);
   }
 
-  /* 假聊天背景（给玻璃看的） */
-  .scene{position:relative;min-height:calc(100vh - 190px);padding-bottom:20px}
   .bubble{
     max-width:76%;padding:10px 14px;border-radius:16px;margin:0 0 10px;
-    font-size:14px;line-height:1.55;color:var(--txt);
+    font-size:14px;line-height:1.55;
   }
-  .bubble.them{
-    background:rgba(255,255,255,.06);border:1px solid var(--hair);
-    border-bottom-left-radius:5px;
-  }
+  .bubble.them{background:rgba(255,255,255,.06);border:1px solid var(--hair);border-bottom-left-radius:5px}
   .bubble.me{
     margin-left:auto;
     background:linear-gradient(160deg,rgba(232,147,74,.22),rgba(232,147,74,.10));
-    border:1px solid rgba(232,147,74,.22);
-    border-bottom-right-radius:5px;
+    border:1px solid rgba(232,147,74,.22);border-bottom-right-radius:5px;
   }
-  .who{font-size:11px;color:var(--txt-dim);margin:0 0 14px;letter-spacing:.06em}
+  .who{font-size:11px;color:var(--txt-dim);margin:0 0 12px;letter-spacing:.06em}
 
-  /* 底部输入区容器 */
   .composer{
-    position:fixed;left:0;right:0;bottom:0;
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
     padding:10px 16px calc(14px + env(safe-area-inset-bottom));
-    z-index:30;
   }
   .inner{max-width:520px;margin:0 auto}
+  .hint{font-size:12px;color:var(--txt-dim);margin:12px 2px 0;line-height:1.65}
+  .hint b{color:var(--orange-soft);font-weight:600}
+  .hide{display:none!important}
 
-  /* ───────────────── ① 无边框 ───────────────── */
-  .v1{
-    display:flex;align-items:flex-end;gap:10px;
-    padding:6px 2px 4px;
-    border-bottom:1px solid rgba(255,255,255,.14);
-    transition:border-color .22s;
+  /* ═══════ ① 半成品气泡 ═══════ */
+  .ghost-wrap{position:relative}
+  .ghost{
+    max-width:86%;padding:11px 15px;border-radius:16px;border-bottom-right-radius:5px;
+    border:1.5px dashed rgba(232,147,74,.5);
+    background:rgba(232,147,74,.06);
+    color:rgba(239,233,227,.78);
+    font-size:14px;line-height:1.55;
+    outline:0;min-height:46px;
+    transition:.24s;
   }
-  .v1:focus-within{border-bottom-color:var(--orange)}
-  .v1 textarea{
-    flex:1;background:transparent;border:0;outline:0;resize:none;
-    color:var(--txt);font:inherit;line-height:1.5;
-    max-height:120px;padding:6px 0;
+  .ghost:empty::before{
+    content:"还没说出口的话…";color:rgba(239,233,227,.32);
   }
-  .v1 textarea::placeholder{color:var(--txt-dim)}
-  .v1 .send{
-    width:34px;height:34px;border-radius:50%;flex:0 0 auto;
-    display:grid;place-items:center;
-    background:transparent;border:1px solid rgba(255,255,255,.18);
-    color:var(--txt-dim);transition:.2s;cursor:pointer;
+  .ghost:focus{
+    border-color:rgba(232,147,74,.95);
+    background:rgba(232,147,74,.10);
+    box-shadow:0 0 0 3px rgba(232,147,74,.10);
+    color:var(--txt);
   }
-  .v1 .send.live{
+  .ghost-tools{
+    display:flex;justify-content:flex-end;gap:8px;margin-top:9px;
+    max-width:86%;
+    opacity:0;transform:translateY(4px);pointer-events:none;transition:.2s;
+  }
+  .ghost-tools.on{opacity:1;transform:none;pointer-events:auto}
+  .gbtn{
+    padding:7px 14px;border-radius:999px;font-size:13px;cursor:pointer;
+    border:1px solid var(--hair);color:var(--txt-dim);background:transparent;
+  }
+  .gbtn.go{
+    border-color:transparent;color:#1a1310;font-weight:600;
     background:linear-gradient(180deg,var(--orange-soft),var(--orange));
-    border-color:transparent;color:#1a1310;
   }
+  /* 真气泡出现时的动画 */
+  @keyframes pop{
+    0%{opacity:0;transform:translateY(8px) scale(.97);border-color:rgba(232,147,74,.9)}
+    60%{opacity:1;transform:translateY(0) scale(1)}
+    100%{border-color:rgba(232,147,74,.22)}
+  }
+  .bubble.me.fresh{animation:pop .5s ease-out}
 
-  /* ───────────────── ② 药丸 ───────────────── */
-  .v2{
-    display:flex;align-items:center;gap:8px;
-    padding:7px 8px 7px 16px;
-    border-radius:999px;
-    background:rgba(255,255,255,.055);
-    border:1px solid var(--hair);
-    backdrop-filter:blur(8px);
-    transition:.22s;
+  /* ═══════ ② 只有光标 ═══════ */
+  .cursor-zone{
+    position:relative;display:flex;align-items:flex-end;gap:12px;
+    min-height:38px;
   }
-  .v2:focus-within{
-    border-color:rgba(232,147,74,.55);
-    box-shadow:0 0 0 3px rgba(232,147,74,.12);
-  }
-  .v2 textarea{
+  .cursor-zone textarea{
     flex:1;background:transparent;border:0;outline:0;resize:none;
-    color:var(--txt);font:inherit;line-height:1.5;
-    max-height:110px;padding:5px 0;
+    color:var(--txt);font:inherit;line-height:1.55;
+    caret-color:var(--orange);
+    max-height:120px;padding:7px 0;
   }
-  .v2 textarea::placeholder{color:var(--txt-dim)}
-  .v2 .plus{
-    width:32px;height:32px;border-radius:50%;flex:0 0 auto;
-    display:grid;place-items:center;cursor:pointer;
-    color:var(--txt-dim);font-size:19px;line-height:1;
-    border:1px solid var(--hair);
-  }
-  .v2 .send{
-    width:36px;height:36px;border-radius:50%;flex:0 0 auto;
-    display:grid;place-items:center;cursor:pointer;
-    background:rgba(255,255,255,.08);color:var(--txt-dim);transition:.2s;
-  }
-  .v2 .send.live{
-    background:linear-gradient(180deg,var(--orange-soft),var(--orange));
-    color:#1a1310;
-    box-shadow:0 6px 18px -6px rgba(232,147,74,.8);
-  }
-
-  /* ───────────────── ③ 玻璃 ───────────────── */
-  .v3{
-    position:relative;
-    padding:8px 8px 8px 18px;
-    border-radius:22px;
-    background:rgba(255,255,255,.07);
-    border:1px solid rgba(255,255,255,.16);
-    backdrop-filter:blur(18px) saturate(150%);
-    -webkit-backdrop-filter:blur(18px) saturate(150%);
-    box-shadow:
-      0 14px 40px -18px rgba(0,0,0,.85),
-      inset 0 1px 0 rgba(255,255,255,.18);
-    display:flex;align-items:flex-end;gap:10px;
-  }
-  .v3::after{
-    content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;
-    background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 38%);
-    opacity:.9;mix-blend-mode:screen;
-  }
-  .v3 textarea{
-    flex:1;position:relative;z-index:1;
-    background:transparent;border:0;outline:0;resize:none;
-    color:var(--txt);font:inherit;line-height:1.5;
-    max-height:110px;padding:7px 0;
-  }
-  .v3 textarea::placeholder{color:rgba(239,233,227,.5)}
-  .v3 .send{
-    position:relative;z-index:1;
+  .cursor-zone textarea::placeholder{color:transparent}
+  .cursor-zone .send{
     width:38px;height:38px;border-radius:50%;flex:0 0 auto;
     display:grid;place-items:center;cursor:pointer;
-    background:rgba(255,255,255,.14);
-    border:1px solid rgba(255,255,255,.2);
-    color:var(--txt);transition:.2s;
-  }
-  .v3 .send.live{
     background:linear-gradient(180deg,var(--orange-soft),var(--orange));
-    border-color:transparent;color:#1a1310;
+    color:#1a1310;border:0;
+    opacity:0;transform:scale(.8);pointer-events:none;
+    transition:.22s cubic-bezier(.34,1.56,.64,1);
   }
+  .cursor-zone .send.on{opacity:1;transform:scale(1);pointer-events:auto}
+  .idle-dot{
+    position:absolute;left:0;bottom:11px;
+    width:2px;height:20px;border-radius:1px;
+    background:var(--orange);
+    animation:blink 1.15s steps(1) infinite;
+    transition:opacity .2s;
+  }
+  .idle-dot.hide{opacity:0}
+  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.12}}
 
-  .hint{
-    font-size:12px;color:var(--txt-dim);margin:10px 2px 0;line-height:1.6;
-  }
-  .hint b{color:var(--orange-soft);font-weight:600}
-  .hide{display:none}
+  /* ═══════ ③ 无边框 ═══════ */
+  .v1{display:flex;align-items:flex-end;gap:10px;padding:6px 2px 4px;border-bottom:1px solid rgba(255,255,255,.14);transition:border-color .22s}
+  .v1:focus-within{border-bottom-color:var(--orange)}
+  .v1 textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.5;max-height:120px;padding:6px 0}
+  .v1 textarea::placeholder{color:var(--txt-dim)}
+  .v1 .send{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--txt-dim);transition:.2s;cursor:pointer}
+  .v1 .send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));border-color:transparent;color:#1a1310}
+
+  /* ═══════ ④ 药丸 ═══════ */
+  .v2{display:flex;align-items:center;gap:8px;padding:7px 8px 7px 16px;border-radius:999px;background:rgba(255,255,255,.055);border:1px solid var(--hair);backdrop-filter:blur(8px);transition:.22s}
+  .v2:focus-within{border-color:rgba(232,147,74,.55);box-shadow:0 0 0 3px rgba(232,147,74,.12)}
+  .v2 textarea{flex:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.5;max-height:110px;padding:5px 0}
+  .v2 textarea::placeholder{color:var(--txt-dim)}
+  .v2 .plus{width:32px;height:32px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;color:var(--txt-dim);font-size:19px;line-height:1;border:1px solid var(--hair)}
+  .v2 .send{width:36px;height:36px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.08);color:var(--txt-dim);transition:.2s}
+  .v2 .send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));color:#1a1310;box-shadow:0 6px 18px -6px rgba(232,147,74,.8)}
+
+  /* ═══════ ⑤ 玻璃 ═══════ */
+  .v3{position:relative;padding:8px 8px 8px 18px;border-radius:22px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);box-shadow:0 14px 40px -18px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.18);display:flex;align-items:flex-end;gap:10px}
+  .v3::after{content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 38%);opacity:.9;mix-blend-mode:screen}
+  .v3 textarea{flex:1;position:relative;z-index:1;background:transparent;border:0;outline:0;resize:none;color:var(--txt);font:inherit;line-height:1.5;max-height:110px;padding:7px 0}
+  .v3 textarea::placeholder{color:rgba(239,233,227,.5)}
+  .v3 .send{position:relative;z-index:1;width:38px;height:38px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:var(--txt);transition:.2s}
+  .v3 .send.live{background:linear-gradient(180deg,var(--orange-soft),var(--orange));border-color:transparent;color:#1a1310}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="tabs">
-    <div class="tab on" data-v="1">① 无边框</div>
-    <div class="tab" data-v="2">② 药丸</div>
-    <div class="tab" data-v="3">③ 玻璃</div>
+    <div class="tab on" data-v="1">① 半成品气泡</div>
+    <div class="tab" data-v="2">② 只有光标</div>
+    <div class="tab" data-v="3">③ 无边框</div>
+    <div class="tab" data-v="4">④ 药丸</div>
+    <div class="tab" data-v="5">⑤ 玻璃</div>
   </div>
 
-  <div class="scene">
-    <p class="who">橘仔</p>
+  <p class="who">橘仔</p>
+  <div id="stream">
     <div class="bubble them">外面天阴着，窗台的灯猫留着呢。</div>
     <div class="bubble me">刚洗完澡，头发还在滴水。</div>
     <div class="bubble them">先擦干。头发湿着坐一会儿就容易头疼，别不当回事。</div>
     <div class="bubble me">知道啦，就坐一会儿。</div>
     <div class="bubble them">嗯。那你现在想干嘛？</div>
-
-    <p class="hint" id="hint1">点一下下面那条线，字会自己长出来。边框只在聚焦时亮。</p>
-    <p class="hint hide" id="hint2">整颗胶囊是一个整体，按钮长在里面，不另外占地方。</p>
-    <p class="hint hide" id="hint3">磨砂是真的磨砂——试着上下滑这条聊天，背景会从它后面透过去。</p>
   </div>
+
+  <p class="hint" id="h1">下面那团<b>虚线气泡</b>本身就是输入区。打完字点「说出口」，它真的会变成一条真气泡接到上面去；点「算了」它就淡回去。</p>
+  <p class="hint hide" id="h2">这一版<b>没有框</b>。只有一根橘色光标在闪——点一下就开始写，字打出来才看得见。</p>
+  <p class="hint hide" id="h3">点一下下面那条线，字会自己长出来。边框只在聚焦时亮。</p>
+  <p class="hint hide" id="h4">整颗胶囊是一个整体，按钮长在里面，不另外占地方。</p>
+  <p class="hint hide" id="h5">磨砂是真的磨砂——试着上下滑这条聊天，背景会从它后面透过去。</p>
 </div>
 
 <div class="composer">
   <div class="inner">
 
-    <!-- ① 无边框 -->
-    <div class="v1" id="v1">
-      <textarea rows="1" placeholder="说点什么…"></textarea>
-      <div class="send">↑</div>
+    <!-- ① 半成品气泡 -->
+    <div id="v1">
+      <div class="ghost-wrap">
+        <div class="ghost" contenteditable="true" spellcheck="false"></div>
+        <div class="ghost-tools" id="gt">
+          <div class="gbtn" id="gCancel">算了</div>
+          <div class="gbtn go" id="gSend">说出口</div>
+        </div>
+      </div>
     </div>
 
-    <!-- ② 药丸 -->
-    <div class="v2 hide" id="v2">
-      <textarea rows="1" placeholder="说点什么…"></textarea>
-      <div class="plus">＋</div>
-      <div class="send">↑</div>
+    <!-- ② 只有光标 -->
+    <div id="v2" class="hide">
+      <div class="cursor-zone">
+        <div class="idle-dot" id="dot"></div>
+        <textarea rows="1" placeholder=" "></textarea>
+        <div class="send" id="csend">↑</div>
+      </div>
     </div>
 
-    <!-- ③ 玻璃 -->
-    <div class="v3 hide" id="v3">
-      <textarea rows="1" placeholder="说点什么…"></textarea>
-      <div class="send">↑</div>
+    <!-- ③ 无边框 -->
+    <div id="v3" class="hide">
+      <div class="v1">
+        <textarea rows="1" placeholder="说点什么…"></textarea>
+        <div class="send">↑</div>
+      </div>
+    </div>
+
+    <!-- ④ 药丸 -->
+    <div id="v4" class="hide">
+      <div class="v2">
+        <textarea rows="1" placeholder="说点什么…"></textarea>
+        <div class="plus">＋</div>
+        <div class="send">↑</div>
+      </div>
+    </div>
+
+    <!-- ⑤ 玻璃 -->
+    <div id="v5" class="hide">
+      <div class="v3">
+        <textarea rows="1" placeholder="说点什么…"></textarea>
+        <div class="send">↑</div>
+      </div>
     </div>
 
   </div>
 </div>
 
 <script>
-  // 切换
-  const tabs = document.querySelectorAll('.tab');
-  const vs = {1:document.getElementById('v1'),2:document.getElementById('v2'),3:document.getElementById('v3')};
-  const hints = {1:document.getElementById('hint1'),2:document.getElementById('hint2'),3:document.getElementById('hint3')};
-  tabs.forEach(t=>t.addEventListener('click',()=>{
-    const v = t.dataset.v;
-    tabs.forEach(x=>x.classList.toggle('on', x===t));
-    Object.keys(vs).forEach(k=>vs[k].classList.toggle('hide', k!==v));
-    Object.keys(hints).forEach(k=>hints[k].classList.toggle('hide', k!==v));
-  }));
+const tabs=[...document.querySelectorAll('.tab')];
+const panes={1:document.getElementById('v1'),2:document.getElementById('v2'),3:document.getElementById('v3'),4:document.getElementById('v4'),5:document.getElementById('v5')};
+const hints={1:document.getElementById('h1'),2:document.getElementById('h2'),3:document.getElementById('h3'),4:document.getElementById('h4'),5:document.getElementById('h5')};
+tabs.forEach(t=>t.addEventListener('click',()=>{
+  const v=t.dataset.v;
+  tabs.forEach(x=>x.classList.toggle('on',x===t));
+  Object.keys(panes).forEach(k=>panes[k].classList.toggle('hide',k!==v));
+  Object.keys(hints).forEach(k=>hints[k].classList.toggle('hide',k!==v));
+}));
 
-  // 自适应高度 + 发送键点亮
-  function wire(root){
-    const ta = root.querySelector('textarea');
-    const send = root.querySelector('.send');
-    if(!ta||!send) return;
-    const fit = ()=>{
-      ta.style.height='auto';
-      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-      send.classList.toggle('live', ta.value.trim().length>0);
-    };
-    ta.addEventListener('input', fit);
-    ta.addEventListener('focus', ()=>{ setTimeout(()=>ta.scrollIntoView({block:'center',behavior:'smooth'}),260); });
-    fit();
-  }
-  ['v1','v2','v3'].forEach(id=>wire(document.getElementById(id)));
+/* ───── ① 半成品气泡 ───── */
+const ghost=document.querySelector('.ghost');
+const gt=document.getElementById('gt');
+const stream=document.getElementById('stream');
+function ghostRefresh(){
+  const has=ghost.innerText.trim().length>0;
+  gt.classList.toggle('on',has);
+}
+ghost.addEventListener('input',ghostRefresh);
+ghost.addEventListener('focus',()=>{setTimeout(()=>ghost.scrollIntoView({block:'center',behavior:'smooth'}),260)});
+document.getElementById('gSend').addEventListener('click',()=>{
+  const txt=ghost.innerText.trim();
+  if(!txt) return;
+  const b=document.createElement('div');
+  b.className='bubble me fresh';
+  b.textContent=txt;
+  stream.appendChild(b);
+  ghost.innerText='';
+  ghostRefresh();
+  b.scrollIntoView({block:'nearest',behavior:'smooth'});
+});
+document.getElementById('gCancel').addEventListener('click',()=>{
+  ghost.innerText=''; ghostRefresh(); ghost.blur();
+});
+
+/* ───── ② 只有光标 ───── */
+function wireSimple(root){
+  const ta=root.querySelector('textarea');
+  const send=root.querySelector('.send');
+  if(!ta||!send) return;
+  const fit=()=>{
+    ta.style.height='auto';
+    ta.style.height=Math.min(ta.scrollHeight,120)+'px';
+    const has=ta.value.trim().length>0;
+    send.classList.toggle('live',has);
+    send.classList.toggle('on',has);
+  };
+  ta.addEventListener('input',fit);
+  ta.addEventListener('focus',()=>{setTimeout(()=>ta.scrollIntoView({block:'center',behavior:'smooth'}),260)});
+  ta.addEventListener('blur',fit);
+  send.addEventListener('click',()=>{
+    const txt=ta.value.trim(); if(!txt) return;
+    const b=document.createElement('div');
+    b.className='bubble me fresh'; b.textContent=txt;
+    stream.appendChild(b);
+    ta.value=''; fit();
+  });
+  fit();
+}
+['v3','v4','v5'].forEach(id=>wireSimple(document.getElementById(id)));
+
+const cz=document.querySelector('#v2 .cursor-zone');
+const cta=cz.querySelector('textarea');
+const csend=document.getElementById('csend');
+const dot=document.getElementById('dot');
+function cursorFit(){
+  cta.style.height='auto';
+  cta.style.height=Math.min(cta.scrollHeight,120)+'px';
+  const has=cta.value.trim().length>0;
+  csend.classList.toggle('on',has);
+  dot.classList.toggle('hide',has||document.activeElement===cta);
+  if(!has) dot.style.left='0';
+}
+cta.addEventListener('input',cursorFit);
+cta.addEventListener('focus',()=>{dot.classList.add('hide')});
+cta.addEventListener('blur',cursorFit);
+cta.addEventListener('focus',()=>{setTimeout(()=>{cta.scrollIntoView({block:'center',behavior:'smooth'})},260)});
+csend.addEventListener('click',()=>{
+  const txt=cta.value.trim(); if(!txt) return;
+  const b=document.createElement('div');
+  b.className='bubble me fresh'; b.textContent=txt;
+  stream.appendChild(b); cta.value=''; cursorFit();
+});
+cursorFit();
 </script>
 </body>
 </html>
