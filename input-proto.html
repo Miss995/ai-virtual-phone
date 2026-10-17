@@ -254,7 +254,10 @@
   }
   .mach.light .slotline{
     background:linear-gradient(180deg,#b4afa6,#98928a);
-    box-shadow:0 -2px 7px rgba(0,0,0,.32) inset, 0 1px 0 rgba(255,255,255,.85);
+    box-shadow:
+      0 -2px 7px rgba(0,0,0,.32) inset,
+      0 1px 0 rgba(255,255,255,.85),
+      0 -5px 10px -3px rgba(70,64,56,.34);
   }
   .mach.light .pin{
     color:rgba(80,74,66,.62);
@@ -361,19 +364,11 @@
     background:linear-gradient(180deg,#0c0b0a,#191614);
     box-shadow:
       0 -2px 7px rgba(0,0,0,.95) inset,
-      0 1px 0 rgba(255,255,255,.07);
+      0 1px 0 rgba(255,255,255,.07),
+      0 -5px 10px -3px rgba(0,0,0,.55);
     z-index:3;
   }
-  /* 缝口上沿的暗影：把钻出来的纸底压住，看着才是"咬住" */
-  .slotline::after{
-    content:"";position:absolute;left:-3px;right:-3px;top:-6px;height:7px;
-    border-radius:3px;
-    background:linear-gradient(180deg, rgba(0,0,0,.62), rgba(0,0,0,0));
-    pointer-events:none;
-  }
-  .mach.light .slotline::after{
-    background:linear-gradient(180deg, rgba(60,55,48,.42), rgba(60,55,48,0));
-  }
+
   /* 纸从缝里朝上冒出来：上宽下窄的透视，底边贴着缝 */
   .sheet{
     position:absolute;left:18px;right:18px;bottom:-4px;
