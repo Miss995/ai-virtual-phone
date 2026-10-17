@@ -303,53 +303,66 @@
     box-shadow:0 -1px 0 rgba(255,255,255,.05), 0 3px 8px -4px rgba(0,0,0,.9);
   }
 
-  /* ── 出纸口 ── */
+  /* ── 出纸口（朝聊天那边 / 朝上） ── */
   .paperbay{
     position:relative;
     margin:0 9px;
     height:0;
-    z-index:1;
+    z-index:6;
   }
   .slotline{
     position:relative;
-    height:7px;margin:0 7px;
-    border-radius:0 0 3px 3px;
-    background:linear-gradient(180deg,#0e0c0b,#1a1715);
+    height:8px;margin:0 7px;
+    border-radius:4px 4px 2px 2px;
+    background:linear-gradient(180deg,#0c0b0a,#191614);
     box-shadow:
-      0 2px 6px rgba(0,0,0,.9) inset,
-      0 1px 0 rgba(255,255,255,.08);
-  }
-  /* 从缝里朝人这边吐出来的纸：上窄下宽，带透视和前倾 */
-  .sheet{
-    position:absolute;left:14px;right:14px;top:6px;
-    height:0;
-    transform-origin:top center;
-    transform:perspective(360px) rotateX(58deg);
-    background:
-      repeating-linear-gradient(180deg, transparent 0 21px, rgba(90,110,150,.14) 21px 22px),
-      linear-gradient(178deg,#faf6ea,#efe9d8);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,.9) inset,
-      0 10px 26px -10px rgba(0,0,0,.9),
-      0 3px 12px -4px rgba(0,0,0,.6);
-    border-radius:0 0 3px 3px;
-    transition:height .42s steps(10);
-    overflow:hidden;
+      0 -2px 7px rgba(0,0,0,.95) inset,
+      0 1px 0 rgba(255,255,255,.07);
     z-index:2;
   }
-  .sheet.on{height:64px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 16px 34px -12px rgba(0,0,0,.95),0 4px 16px -5px rgba(0,0,0,.7)}
+  /* 纸从缝里朝上冒出来：上宽下窄的透视，底边贴着缝 */
+  .sheet{
+    position:absolute;left:18px;right:18px;bottom:7px;
+    height:0;
+    transform-origin:bottom center;
+    transform:perspective(320px) rotateX(-56deg);
+    background:
+      repeating-linear-gradient(180deg, transparent 0 21px, rgba(90,110,150,.13) 21px 22px),
+      linear-gradient(178deg,#fbf7eb,#efe9d8);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.92) inset,
+      0 -12px 30px -12px rgba(0,0,0,.95),
+      0 -3px 14px -5px rgba(0,0,0,.65);
+    border-radius:3px 3px 0 0;
+    transition:height .46s steps(12);
+    overflow:hidden;
+    z-index:1;
+  }
+  .sheet.on{
+    height:70px;
+    box-shadow:0 1px 0 rgba(255,255,255,.92) inset,0 -18px 38px -14px rgba(0,0,0,.95),0 -5px 20px -6px rgba(0,0,0,.7);
+  }
   /* 纸两边齿孔 */
   .sheet::before,.sheet::after{
     content:"";position:absolute;top:0;bottom:0;width:8px;
-    background:radial-gradient(circle at 4px 5px, rgba(70,60,45,.4) 1.8px, transparent 2.2px) 0 0/8px 11px repeat-y;
+    background:radial-gradient(circle at 4px 5px, rgba(70,60,45,.36) 1.7px, transparent 2.1px) 0 0/8px 11px repeat-y;
   }
   .sheet::before{left:0}
   .sheet::after{right:0}
-  /* 卷曲的那道阴影（纸往下垂的感觉） */
+  /* 顶边卷曲（纸往上冒到头自然往后弯） */
   .sheet .curl{
-    position:absolute;left:0;right:0;bottom:0;height:26px;
-    background:linear-gradient(180deg,transparent,rgba(120,105,80,.22));
+    position:absolute;left:0;right:0;top:0;height:28px;
+    background:linear-gradient(180deg,rgba(140,125,95,.26),transparent);
+    box-shadow:0 2px 6px -4px rgba(0,0,0,.5) inset;
     pointer-events:none;
+  }
+  /* 印刷内容 */
+  .sheet .ink{
+    position:absolute;left:14px;right:14px;bottom:6px;
+    font:12px/19px "SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
+    color:#3a3226;white-space:pre-wrap;word-break:break-all;
+    max-height:56px;overflow:hidden;
+    text-align:left;
   }
 
   /* ── 贴在机器前脸的便利贴 ── */
@@ -524,14 +537,14 @@
         <div class="led idle" id="led2"></div>
         <div class="vents"></div>
       </div>
+      <div class="paperbay">
+        <div class="sheet" id="sheet"></div>
+        <div class="slotline"></div>
+      </div>
       <div class="bezel">
         <div class="lcd">
           <textarea id="prnTa" rows="2" placeholder="在这儿敲字，屏幕会亮…"></textarea>
         </div>
-      </div>
-      <div class="paperbay">
-        <div class="slotline"></div>
-        <div class="sheet" id="sheet"></div>
       </div>
       <div class="deck">
         <div class="tag">CAT-PRINTER · MODEL Ⅶ</div>
@@ -739,13 +752,22 @@ const sheetEl=document.getElementById('sheet');
 // 从出纸口吐纸 → 吐完撕下飞进聊天
 function printOut(text, cb){
   if(!sheetEl){ cb(text); return; }
-  sheetEl.innerHTML='<div class="curl"></div>';
+  sheetEl.innerHTML='<div class="curl"></div><div class="ink"></div>';
+  const ink=sheetEl.querySelector('.ink');
   sheetEl.classList.add('on');
   led2.className='led on';
+  // 字一行一行印上去
+  const chars=text.split('');
+  let i=0;
+  const tick=setInterval(()=>{
+    i+=Math.max(1, Math.round(chars.length/26));
+    ink.textContent=chars.slice(0,i).join('');
+    if(i>=chars.length){ clearInterval(tick); }
+  }, 16);
   setTimeout(()=>{
     sheetEl.classList.remove('on');
     setTimeout(()=>{ led2.className='led warm'; cb(text); }, 210);
-  }, 430);
+  }, 460);
 }
 
 function tearOff(text){
