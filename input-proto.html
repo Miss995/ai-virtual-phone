@@ -219,6 +219,51 @@
       0 16px 34px -16px rgba(0,0,0,.95),
       0 4px 12px -8px rgba(0,0,0,.9);
   }
+  /* ── 机身右下侧的进纸口 + 附件卡片 ── */
+  .mach{overflow:visible}
+  .side-slot{
+    position:absolute;right:-2px;bottom:34px;
+    width:7px;height:46px;
+    border-radius:3px 0 0 3px;
+    background:linear-gradient(90deg,#0a0908,#1c1917);
+    box-shadow:
+      inset 2px 0 4px rgba(0,0,0,.95),
+      -1px 0 3px rgba(0,0,0,.6);
+    z-index:4;
+  }
+  .mach.light .side-slot{
+    background:linear-gradient(90deg,#8b857c,#a8a29a);
+    box-shadow:inset 2px 0 4px rgba(0,0,0,.35), -1px 0 3px rgba(90,84,76,.3);
+  }
+
+  /* 卡片沓：贴在机身下方、靠右 */
+  .attachbox{
+    position:absolute;right:10px;bottom:-46px;
+    width:0;height:0;z-index:3;
+  }
+  .card{
+    position:absolute;right:0;bottom:0;
+    width:38px;height:38px;border-radius:4px;
+    background:#d8d3c8 center/cover no-repeat;
+    border:1px solid rgba(255,255,255,.35);
+    box-shadow:0 3px 9px -3px rgba(0,0,0,.85);
+    transition:transform .28s cubic-bezier(.34,1.3,.64,1), opacity .28s;
+    overflow:hidden;
+    display:grid;place-items:center;
+    font-size:9px;color:#5c6b7a;letter-spacing:.04em;
+  }
+  .card::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(150deg,rgba(255,255,255,.35),transparent 42%);
+  }
+  .card.fly{
+    transform:translateX(28px) scale(.6);opacity:0;
+  }
+  .card .n{
+    position:absolute;right:2px;bottom:1px;font-size:8px;
+    color:#fff;text-shadow:0 0 3px rgba(0,0,0,.9);
+  }
+
   .tone{
     flex:0 0 auto;width:20px;height:20px;border-radius:50%;
     display:grid;place-items:center;cursor:pointer;
@@ -602,6 +647,8 @@
         <div class="go" id="prnGo">打印</div>
       </div>
       <div class="mach-base"></div>
+      <div class="side-slot"></div>
+      <div class="attachbox" id="attachbox"></div>
       <div class="sticky-zone">
         <div class="sticky hide" id="stk"></div>
       </div>
@@ -830,12 +877,35 @@ function tearOff(text){
   b.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 
+/* 附件卡片沓 */
+let cards=[];
+const attachbox=document.getElementById('attachbox');
+const FAKE=['图','图','文','图','音'];
+let fakeIdx=0;
+function renderCards(){
+  attachbox.innerHTML='';
+  cards.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='card';
+    d.textContent=c.label;
+    d.style.transform='translate('+(i*3)+'px,'+(-i*3)+'px)';
+    d.style.zIndex=String(10+i);
+    if(i===cards.length-1 && cards.length>1){
+      const n=document.createElement('span');
+      n.className='n'; n.textContent=cards.length;
+      d.appendChild(n);
+    }
+    attachbox.appendChild(d);
+  });
+}
+
+/* ＋ = 加附件（跟橘瓣一致） */
 prnPin.addEventListener('click',()=>{
-  const t=prnTa.value.trim(); if(!t) return;
-  pending=t;
-  stk.textContent=t;
-  stk.classList.remove('hide');
-  prnTa.value=''; prnWake(false);
+  if(cards.length>=5) return;
+  cards.push({label:FAKE[fakeIdx++%FAKE.length]});
+  renderCards();
+  led1.className='led on';
+  setTimeout(()=>{ led1.className='led idle'; },420);
 });
 
 stk.addEventListener('click',()=>{
@@ -878,9 +948,19 @@ document.getElementById('tone').addEventListener('click',()=>{
   document.querySelector('#v12 .mach').classList.toggle('light');
 });
 
+function flushCards(){
+  if(!cards.length) return 0;
+  const els=[...attachbox.querySelectorAll('.card')];
+  els.forEach((d,i)=>setTimeout(()=>d.classList.add('fly'), i*70));
+  const dur=(els.length-1)*70+300;
+  setTimeout(()=>{ cards=[]; renderCards(); }, dur);
+  return dur;
+}
+
 prnGo.addEventListener('click',()=>{
   const t=prnTa.value.trim();
-  if(t){ prnTa.value=''; prnWake(false); printOut(t, tearOff); return; }
+  const wait=flushCards();
+  if(t){ prnTa.value=''; prnWake(false); setTimeout(()=>printOut(t, tearOff), Math.min(wait,220)); return; }
   if(pending){ stkText.textContent=pending; stkLayer.classList.add('on'); }
 });
 
