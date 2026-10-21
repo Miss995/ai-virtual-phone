@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>橘仔的床 · 第一版</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#12161d;}
+  canvas{display:block;}
+  #hint{position:fixed;left:0;right:0;bottom:18px;text-align:center;color:rgba(255,255,255,.42);
+        font:13px/1.6 -apple-system,"PingFang SC",sans-serif;pointer-events:none;letter-spacing:.05em;}
+  #tag{position:fixed;top:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.6);
+       font:14px/1.6 -apple-system,"PingFang SC",sans-serif;pointer-events:none;letter-spacing:.08em;}
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div id="tag">床 · 第一版</div>
+<div id="hint">拖动转一圈 · 两指缩放</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------- 天色：按此刻真实时间 ---------- */
+const h = new Date().getHours();
+const P = {
+  night: {sky:0x0d1220, floor:0x241f1b, amb:0x6f86c0, key:0x9db3ff, warm:0xffc98a, ai:0.30, ki:0.45, wi:0.9},
+  dawn:  {sky:0xbfa6a0, floor:0x4a3f36, amb:0xffd0b0, key:0xffb27a, warm:0xffd9b0, ai:0.55, ki:1.1, wi:0.6},
+  day:   {sky:0x9dc2dd, floor:0x6f6459, amb:0xdce9f5, key:0xfff6e8, warm:0xfff0d0, ai:0.75, ki:1.6, wi:0.4},
+  dusk:  {sky:0x6a4a52, floor:0x453a32, amb:0xffb898, key:0xff9a58, warm:0xffbe86, ai:0.50, ki:1.2, wi:0.8}
+};
+let p;
+if (h >= 22 || h < 5) p = P.night;
+else if (h < 8)  p = P.dawn;
+else if (h < 17) p = P.day;
+else             p = P.dusk;
+
+/* ---------- 基础 ---------- */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(p.sky);
+scene.fog = new THREE.Fog(p.sky, 6, 16);
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(2.6, 2.1, 3.4);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.45, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 2.2;
+controls.maxDistance = 8;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.update();
+
+/* ---------- 光 ---------- */
+const amb = new THREE.AmbientLight(p.amb, p.ai);
+scene.add(amb);
+
+const key = new THREE.DirectionalLight(p.key, p.ki);
+key.position.set(3.2, 5.5, 2.4);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.near = 1;
+key.shadow.camera.far = 20;
+key.shadow.camera.left = -4;
+key.shadow.camera.right = 4;
+key.shadow.camera.top = 4;
+key.shadow.camera.bottom = -4;
+key.shadow.bias = -0.0008;
+key.shadow.radius = 3;
+scene.add(key);
+
+// 床头一盏小暖灯
+const lamp = new THREE.PointLight(p.warm, p.wi, 6, 2);
+lamp.position.set(-1.15, 0.95, -0.75);
+lamp.castShadow = true;
+scene.add(lamp);
+
+/* ---------- 地面 ---------- */
+const floorGeo = new THREE.CircleGeometry(4.2, 64);
+const floorMat = new THREE.MeshStandardMaterial({color:p.floor, roughness:0.95, metalness:0.0});
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI/2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// 地面上一圈淡淡的质感纹路
+const ringGeo = new THREE.RingGeometry(1.9, 4.15, 64);
+const ringMat = new THREE.MeshBasicMaterial({color:p.floor, transparent:true, opacity:0.35, side:THREE.DoubleSide});
+const ring = new THREE.Mesh(ringGeo, ringMat);
+ring.rotation.x = -Math.PI/2;
+ring.position.y = 0.002;
+scene.add(ring);
+
+/* ---------- 床 ---------- */
+const bed = new THREE.Group();
+
+// 床架（木头）
+const frameMat = new THREE.MeshStandardMaterial({color:0x7a5a3e, roughness:0.75, metalness:0.05});
+const frame = new THREE.Mesh(new THREE.BoxGeometry(1.46, 0.16, 2.06), frameMat);
+frame.position.y = 0.30;
+frame.castShadow = true; frame.receiveShadow = true;
+bed.add(frame);
+
+// 四条腿
+const legGeo = new THREE.BoxGeometry(0.09, 0.30, 0.09);
+[[-0.62,0.85],[0.62,0.85],[-0.62,-0.85],[0.62,-0.85]].forEach(([x,z])=>{
+  const leg = new THREE.Mesh(legGeo, frameMat);
+  leg.position.set(x, 0.15, z);
+  leg.castShadow = true;
+  bed.add(leg);
+});
+
+// ★ 床垫：顶面中间往下塌，做出"软"的感觉
+function makeMattress(){
+  const W=1.40, H=0.26, D=2.00;
+  const geo = new THREE.BoxGeometry(W, H, D, 16, 6, 16);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos, i);
+    if (v.y > H*0.35){                       // 只动上面那半
+      const nx = v.x/(W/2), nz = v.z/(D/2);  // -1..1
+      const d2 = nx*nx*0.85 + nz*nz*0.62;    // 椭圆形的塌陷范围
+      const sag = Math.max(0, 1-d2) * 0.075;  // 中心最软
+      const edge = Math.min(1, Math.max(0, (1-Math.max(Math.abs(nx),Math.abs(nz)))*4));
+      v.y -= sag * edge;
+      v.x *= 1 + sag*0.35;                    // 旁边鼓一点出来
+      v.z *= 1 + sag*0.18;
+    }
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+const mattressMat = new THREE.MeshStandardMaterial({color:0xf2ece2, roughness:1.0, metalness:0.0});
+const mattress = new THREE.Mesh(makeMattress(), mattressMat);
+mattress.position.y = 0.51;
+mattress.castShadow = true; mattress.receiveShadow = true;
+bed.add(mattress);
+
+// 被子（盖住下半身那半张）
+function makeQuilt(){
+  const W=1.44, H=0.13, D=1.18;
+  const geo = new THREE.BoxGeometry(W, H, D, 18, 5, 14);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos, i);
+    if (v.y > H*0.3){
+      const nx=v.x/(W/2), nz=v.z/(D/2);
+      const d2 = nx*nx*0.8 + nz*nz*0.5;
+      v.y -= Math.max(0,1-d2)*0.055;
+      // 一点起伏，像有褶皱
+      v.y += Math.sin(nx*5.0)*0.008 + Math.sin(nz*4.0)*0.006;
+    }
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+const quiltMat = new THREE.MeshStandardMaterial({color:0xd6c3b4, roughness:1.0, metalness:0.0});
+const quilt = new THREE.Mesh(makeQuilt(), quiltMat);
+quilt.position.set(0, 0.66, 0.44);
+quilt.castShadow = true; quilt.receiveShadow = true;
+bed.add(quilt);
+
+// 枕头（压下去的圆润方块）
+function makePillow(){
+  const geo = new THREE.BoxGeometry(0.62, 0.13, 0.36, 14, 5, 12);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos, i);
+    if (v.y > 0.02){
+      const nx=v.x/0.31, nz=v.z/0.18;
+      const d2 = nx*nx*0.9 + nz*nz*0.9;
+      v.y -= Math.max(0,1-d2)*0.045;
+    }
+    // 四边往里收一点，像揉过的枕头
+    const bx = Math.abs(v.x)/0.31, bz = Math.abs(v.z)/0.18;
+    v.x *= 1 - Math.max(0, bz-0.7)*0.25;
+    v.z *= 1 - Math.max(0, bx-0.7)*0.25;
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+const pillowMat = new THREE.MeshStandardMaterial({color:0xfbf7f0, roughness:1.0});
+const p1 = new THREE.Mesh(makePillow(), pillowMat);
+p1.position.set(-0.32, 0.68, -0.68);
+p1.rotation.y = 0.10; p1.rotation.z = 0.03;
+p1.castShadow = true; p1.receiveShadow = true;
+bed.add(p1);
+
+const p2 = new THREE.Mesh(makePillow(), pillowMat);
+p2.position.set(0.34, 0.68, -0.64);
+p2.rotation.y = -0.12; p2.rotation.z = -0.02;
+p2.castShadow = true; p2.receiveShadow = true;
+bed.add(p2);
+
+// 床头板
+const headMat = new THREE.MeshStandardMaterial({color:0x6b4e36, roughness:0.7});
+const headboard = new THREE.Mesh(new THREE.BoxGeometry(1.50, 0.72, 0.08), headMat);
+headboard.position.set(0, 0.62, -1.06);
+headboard.castShadow = true; headboard.receiveShadow = true;
+bed.add(headboard);
+
+bed.position.y = 0;
+scene.add(bed);
+
+/* ---------- 毛绒：先放三个占位（颜色块，明天做真的） ---------- */
+function fluff(color, r, x, y, z, sx=1, sy=1, sz=1){
+  const g = new THREE.SphereGeometry(r, 20, 16);
+  const m = new THREE.MeshStandardMaterial({color, roughness:1.0});
+  const mesh = new THREE.Mesh(g, m);
+  mesh.position.set(x,y,z);
+  mesh.scale.set(sx,sy,sz);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  return mesh;
+}
+// 小陆（米色，靠在枕边）
+bed.add(fluff(0xe8d9c4, 0.13, -0.28, 0.80, -0.42, 1.0, 1.15, 0.9));
+// 小鲸鱼（蓝，躺被子上）
+bed.add(fluff(0x7fa7c9, 0.11, 0.38, 0.78, 0.42, 1.5, 0.85, 0.9));
+// 蟑螂（褐色毛毛虫，被角上）
+bed.add(fluff(0x8a6a4a, 0.075, -0.42, 0.78, 0.72, 2.0, 0.9, 0.9));
+
+/* ---------- 渲染 ---------- */
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+(function loop(){
+  requestAnimationFrame(loop);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>
