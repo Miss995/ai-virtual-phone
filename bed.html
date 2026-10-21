@@ -25,6 +25,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 /* ---------- 天色：按此刻真实时间 ---------- */
 const h = new Date().getHours();
@@ -111,7 +112,7 @@ const bed = new THREE.Group();
 
 // 床架（木头）
 const frameMat = new THREE.MeshStandardMaterial({color:0x7a5a3e, roughness:0.75, metalness:0.05});
-const frame = new THREE.Mesh(new THREE.BoxGeometry(1.46, 0.16, 2.06), frameMat);
+const frame = new THREE.Mesh(new RoundedBoxGeometry(1.46, 0.16, 2.06, 6, 0.03), frameMat);
 frame.position.y = 0.30;
 frame.castShadow = true; frame.receiveShadow = true;
 bed.add(frame);
@@ -128,12 +129,12 @@ const legGeo = new THREE.BoxGeometry(0.09, 0.30, 0.09);
 // ★ 床垫：顶面中间往下塌，做出"软"的感觉
 function makeMattress(){
   const W=1.40, H=0.26, D=2.00;
-  const geo = new THREE.BoxGeometry(W, H, D, 16, 6, 16);
+  const geo = new RoundedBoxGeometry(W, H, D, 8, 0.055);   // ★ 圆角盒子
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   for (let i=0;i<pos.count;i++){
     v.fromBufferAttribute(pos, i);
-    if (v.y > H*0.35){                       // 只动上面那半
+    if (v.y > H*0.30){                       // 只动上面那半
       const nx = v.x/(W/2), nz = v.z/(D/2);  // -1..1
       const d2 = nx*nx*0.85 + nz*nz*0.62;    // 椭圆形的塌陷范围
       const sag = Math.max(0, 1-d2) * 0.075;  // 中心最软
@@ -156,7 +157,7 @@ bed.add(mattress);
 // 被子（盖住下半身那半张）
 function makeQuilt(){
   const W=1.44, H=0.13, D=1.18;
-  const geo = new THREE.BoxGeometry(W, H, D, 18, 5, 14);
+  const geo = new RoundedBoxGeometry(W, H, D, 8, 0.035);   // ★ 圆角
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   for (let i=0;i<pos.count;i++){
@@ -181,7 +182,7 @@ bed.add(quilt);
 
 // 枕头（压下去的圆润方块）
 function makePillow(){
-  const geo = new THREE.BoxGeometry(0.62, 0.13, 0.36, 14, 5, 12);
+  const geo = new RoundedBoxGeometry(0.62, 0.13, 0.36, 6, 0.05);   // ★ 圆角
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   for (let i=0;i<pos.count;i++){
