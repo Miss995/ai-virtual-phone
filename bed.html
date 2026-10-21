@@ -126,6 +126,18 @@ const legGeo = new THREE.BoxGeometry(0.09, 0.30, 0.09);
   bed.add(leg);
 });
 
+// ★ 共用的塌陷曲线：床垫和床单都用这一套，才会贴合
+const MW = 1.40, MD = 2.00, MSAG = 0.075;
+function sagAt(nx, nz){                 // nx,nz 已归一化到床垫尺寸
+  const d2 = nx*nx*0.85 + nz*nz*0.62;
+  const edge = Math.min(1, Math.max(0, (1-Math.max(Math.abs(nx),Math.abs(nz)))*4));
+  return Math.max(0, 1-d2) * MSAG * edge;
+}
+function outward(nx, nz){               // 边缘被压出来的鼓包
+  const d2 = nx*nx*0.85 + nz*nz*0.62;
+  return Math.max(0, 1-d2) * 0.075;
+}
+
 // ★ 床垫：顶面中间往下塌，做出"软"的感觉
 function makeMattress(){
   const W=1.40, H=0.26, D=2.00;
@@ -135,13 +147,11 @@ function makeMattress(){
   for (let i=0;i<pos.count;i++){
     v.fromBufferAttribute(pos, i);
     if (v.y > H*0.30){                       // 只动上面那半
-      const nx = v.x/(W/2), nz = v.z/(D/2);  // -1..1
-      const d2 = nx*nx*0.85 + nz*nz*0.62;    // 椭圆形的塌陷范围
-      const sag = Math.max(0, 1-d2) * 0.075;  // 中心最软
-      const edge = Math.min(1, Math.max(0, (1-Math.max(Math.abs(nx),Math.abs(nz)))*4));
-      v.y -= sag * edge;
-      v.x *= 1 + sag*0.35;                    // 旁边鼓一点出来
-      v.z *= 1 + sag*0.18;
+      const nx = v.x/(W/2), nz = v.z/(D/2);
+      const sag = sagAt(nx, nz);
+      v.y -= sag;
+      v.x *= 1 + outward(nx,nz)*0.35;         // 旁边鼓一点出来
+      v.z *= 1 + outward(nx,nz)*0.18;
     }
     pos.setXYZ(i, v.x, v.y, v.z);
   }
@@ -154,34 +164,37 @@ mattress.position.y = 0.51;
 mattress.castShadow = true; mattress.receiveShadow = true;
 bed.add(mattress);
 
-// ★ 床单：一个比床垫大一圈的"罩子"，整个套上去（宝的办法）
-//   露在床垫外面那一圈，就是布垂下来的样子
+// ★ 床单：矮罩子 —— 只盖住顶面 + 垂一圈，露出床垫的边
+//   尺寸比床垫大一圈，z 方向短一点躲开床头板，底部落在床板之上（0.40）
 function makeSheet(){
-  const W=1.50, H=0.34, D=2.10;                    // 比床垫(1.40×0.26×2.00)大一圈、高一点
-  const geo = new THREE.BoxGeometry(W, H, D, 28, 4, 28);
+  const W = MW + 0.10, D = MD + 0.02;      // 宽 1.50 / 长 2.02（床头那头不顶到板）
+  const TOP = 0.640 + 0.020;                // 顶面 = 床垫最高点 + 2cm
+  const BOT = 0.400;                        // 底面 = 床板顶面之上，不扎进去
+  const H = TOP - BOT;                      // 0.26
+  const geo = new RoundedBoxGeometry(W, H, D, 8, 0.016);   // ★ 边做圆
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
-  const top = H/2;                                 // 0.17
+  const halfTop = H/2;
   for (let i=0;i<pos.count;i++){
     v.fromBufferAttribute(pos, i);
-    // 只动顶面：跟床垫同款的塌陷，做出软感
-    if (v.y > top - 0.01){
-      const nx = v.x/(W/2), nz = v.z/(D/2);
-      const d2 = nx*nx*0.85 + nz*nz*0.62;
-      const sag = Math.max(0, 1-d2) * 0.062;
-      const edge = Math.min(1, Math.max(0, (1-Math.max(Math.abs(nx),Math.abs(nz)))*4));
-      v.y -= sag * edge;
+    if (v.y > halfTop - 0.012){
+      // ★ 用床垫那套曲线算（把罩子坐标归一化到床垫尺寸），所以贴得上
+      const nx = v.x/(MW/2), nz = v.z/(MD/2);
+      v.y -= sagAt(nx, nz);
     }
     pos.setXYZ(i, v.x, v.y, v.z);
   }
   geo.computeVertexNormals();
-  return geo;
+  return {geo, H, TOP, BOT};
 }
-const sheetMat = new THREE.MeshStandardMaterial({color:0xe6dfd5, roughness:1.0, metalness:0.0});
-const sheet = new THREE.Mesh(makeSheet(), sheetMat);
-sheet.position.y = 0.32 + 0.17;                    // 底面落到 0.32，顶面到 0.66
-sheet.castShadow = true; sheet.receiveShadow = true;
-bed.add(sheet);
+const sheetMat = new THREE.MeshStandardMaterial({color:0xe6dfd5, roughness:1.0, metalness:0.0, side:THREE.DoubleSide});
+{
+  const r = makeSheet();
+  const sheet = new THREE.Mesh(r.geo, sheetMat);
+  sheet.position.y = (r.TOP + r.BOT) / 2;
+  sheet.castShadow = true; sheet.receiveShadow = true;
+  bed.add(sheet);
+}
 
 // 被子（盖住下半身那半张）
 function makeQuilt(){
