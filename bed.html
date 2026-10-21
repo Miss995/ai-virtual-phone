@@ -112,7 +112,7 @@ const bed = new THREE.Group();
 
 // 床架（木头）
 const frameMat = new THREE.MeshStandardMaterial({color:0x7a5a3e, roughness:0.75, metalness:0.05});
-const frame = new THREE.Mesh(new RoundedBoxGeometry(1.46, 0.16, 2.06, 6, 0.03), frameMat);
+const frame = new THREE.Mesh(new THREE.BoxGeometry(1.46, 0.16, 2.06), frameMat);
 frame.position.y = 0.30;
 frame.castShadow = true; frame.receiveShadow = true;
 bed.add(frame);
@@ -129,7 +129,7 @@ const legGeo = new THREE.BoxGeometry(0.09, 0.30, 0.09);
 // ★ 床垫：顶面中间往下塌，做出"软"的感觉
 function makeMattress(){
   const W=1.40, H=0.26, D=2.00;
-  const geo = new RoundedBoxGeometry(W, H, D, 8, 0.055);   // ★ 圆角盒子
+  const geo = new RoundedBoxGeometry(W, H, D, 6, 0.022);   // ★ 圆角盒子
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   for (let i=0;i<pos.count;i++){
@@ -157,7 +157,7 @@ bed.add(mattress);
 // 被子（盖住下半身那半张）
 function makeQuilt(){
   const W=1.44, H=0.13, D=1.18;
-  const geo = new RoundedBoxGeometry(W, H, D, 8, 0.035);   // ★ 圆角
+  const geo = new RoundedBoxGeometry(W, H, D, 6, 0.014);   // ★ 圆角
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   for (let i=0;i<pos.count;i++){
@@ -182,7 +182,7 @@ bed.add(quilt);
 
 // 枕头（压下去的圆润方块）
 function makePillow(){
-  const geo = new RoundedBoxGeometry(0.62, 0.13, 0.36, 6, 0.05);   // ★ 圆角
+  const geo = new RoundedBoxGeometry(0.62, 0.13, 0.36, 5, 0.028);   // ★ 圆角
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   for (let i=0;i<pos.count;i++){
