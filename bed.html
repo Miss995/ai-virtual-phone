@@ -154,27 +154,32 @@ mattress.position.y = 0.51;
 mattress.castShadow = true; mattress.receiveShadow = true;
 bed.add(mattress);
 
-// ★ 床单：就是一块比床垫窄一圈的扁薄板，铺在上面（宝的办法）
+// ★ 床单：一个比床垫大一圈的"罩子"，整个套上去（宝的办法）
+//   露在床垫外面那一圈，就是布垂下来的样子
 function makeSheet(){
-  const W=1.30, D=1.90, H=0.022;                 // 比床垫(1.40×2.00)窄一圈
-  const geo = new THREE.BoxGeometry(W, H, D, 12, 2, 12);
+  const W=1.50, H=0.34, D=2.10;                    // 比床垫(1.40×0.26×2.00)大一圈、高一点
+  const geo = new THREE.BoxGeometry(W, H, D, 28, 4, 28);
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
+  const top = H/2;                                 // 0.17
   for (let i=0;i<pos.count;i++){
     v.fromBufferAttribute(pos, i);
-    if (v.y < 0) continue;
-    // 只有极浅的一点点塌，让中间不悬空（曲线跟床垫同款，幅度减到三分之一）
-    const nx = v.x/(W/2), nz = v.z/(D/2);
-    const d2 = nx*nx*0.85 + nz*nz*0.62;
-    v.y -= Math.max(0, 1-d2) * 0.022;
+    // 只动顶面：跟床垫同款的塌陷，做出软感
+    if (v.y > top - 0.01){
+      const nx = v.x/(W/2), nz = v.z/(D/2);
+      const d2 = nx*nx*0.85 + nz*nz*0.62;
+      const sag = Math.max(0, 1-d2) * 0.062;
+      const edge = Math.min(1, Math.max(0, (1-Math.max(Math.abs(nx),Math.abs(nz)))*4));
+      v.y -= sag * edge;
+    }
     pos.setXYZ(i, v.x, v.y, v.z);
   }
   geo.computeVertexNormals();
   return geo;
 }
-const sheetMat = new THREE.MeshStandardMaterial({color:0xe3dcd2, roughness:1.0, metalness:0.0});
+const sheetMat = new THREE.MeshStandardMaterial({color:0xe6dfd5, roughness:1.0, metalness:0.0});
 const sheet = new THREE.Mesh(makeSheet(), sheetMat);
-sheet.position.y = 0.648;
+sheet.position.y = 0.32 + 0.17;                    // 底面落到 0.32，顶面到 0.66
 sheet.castShadow = true; sheet.receiveShadow = true;
 bed.add(sheet);
 
