@@ -154,30 +154,25 @@ mattress.position.y = 0.51;
 mattress.castShadow = true; mattress.receiveShadow = true;
 bed.add(mattress);
 
-// ★ 床单：平铺到床边就直角折下去，垂在床垫外侧，不起褶
+// ★ 床单：就是一块比床垫窄一圈的扁薄板，铺在上面（宝的办法）
 function makeSheet(){
-  const W=1.56, D=2.18, H=0.032;
-  const geo = new THREE.BoxGeometry(W, H, D, 48, 2, 48);
+  const W=1.30, D=1.90, H=0.022;                 // 比床垫(1.40×2.00)窄一圈
+  const geo = new THREE.BoxGeometry(W, H, D, 12, 2, 12);
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
-  const EDGE = 0.895;       // 床垫外侧 ≈ 0.70 / 0.78
-  const DROP = 0.145;       // 垂多深
   for (let i=0;i<pos.count;i++){
     v.fromBufferAttribute(pos, i);
-    if (v.y < 0) continue;                              // 只动上半
+    if (v.y < 0) continue;
+    // 只有极浅的一点点塌，让中间不悬空（曲线跟床垫同款，幅度减到三分之一）
     const nx = v.x/(W/2), nz = v.z/(D/2);
-    const d2 = Math.max(Math.abs(nx), Math.abs(nz));
-    if (d2 > EDGE){
-      // ★ 直角折下去：几乎不缓，直接垂
-      const k = Math.min(1, (d2 - EDGE) / 0.075);
-      v.y -= DROP * Math.sqrt(k);                       // sqrt = 前半段掉得快，像折痕
-    }
+    const d2 = nx*nx*0.85 + nz*nz*0.62;
+    v.y -= Math.max(0, 1-d2) * 0.022;
     pos.setXYZ(i, v.x, v.y, v.z);
   }
   geo.computeVertexNormals();
   return geo;
 }
-const sheetMat = new THREE.MeshStandardMaterial({color:0xe3dcd2, roughness:1.0, metalness:0.0, side:THREE.DoubleSide});
+const sheetMat = new THREE.MeshStandardMaterial({color:0xe3dcd2, roughness:1.0, metalness:0.0});
 const sheet = new THREE.Mesh(makeSheet(), sheetMat);
 sheet.position.y = 0.648;
 sheet.castShadow = true; sheet.receiveShadow = true;
