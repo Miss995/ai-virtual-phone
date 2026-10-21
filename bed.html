@@ -154,6 +154,38 @@ mattress.position.y = 0.51;
 mattress.castShadow = true; mattress.receiveShadow = true;
 bed.add(mattress);
 
+// ★ 床单：铺在床垫上，比床垫大一圈，边缘垂下来
+function makeSheet(){
+  const W=1.44, D=2.04, H=0.035;
+  const geo = new THREE.BoxGeometry(W, H, D, 24, 2, 24);
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos, i);
+    const nx = v.x/(W/2), nz = v.z/(D/2);
+    const d2 = Math.max(Math.abs(nx), Math.abs(nz));
+    if (d2 > 0.86){
+      // 边缘往下垂
+      const k = Math.min(1, (d2-0.86)/0.14);
+      v.y -= k*k*0.085;
+      // 垂下来的地方往外带一点
+      v.x *= 1 + k*0.012;
+      v.z *= 1 + k*0.010;
+    } else {
+      // 中间微微起伏，像铺出来的褶
+      v.y += Math.sin(nx*4.2)*0.004 + Math.cos(nz*3.6)*0.003;
+    }
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+const sheetMat = new THREE.MeshStandardMaterial({color:0xe3dcd2, roughness:1.0, metalness:0.0});
+const sheet = new THREE.Mesh(makeSheet(), sheetMat);
+sheet.position.y = 0.645;
+sheet.castShadow = true; sheet.receiveShadow = true;
+bed.add(sheet);
+
 // 被子（盖住下半身那半张）
 function makeQuilt(){
   const W=1.44, H=0.13, D=1.18;
@@ -176,7 +208,7 @@ function makeQuilt(){
 }
 const quiltMat = new THREE.MeshStandardMaterial({color:0xd6c3b4, roughness:1.0, metalness:0.0});
 const quilt = new THREE.Mesh(makeQuilt(), quiltMat);
-quilt.position.set(0, 0.66, 0.44);
+quilt.position.set(0, 0.695, 0.44);
 quilt.castShadow = true; quilt.receiveShadow = true;
 bed.add(quilt);
 
@@ -203,13 +235,13 @@ function makePillow(){
 }
 const pillowMat = new THREE.MeshStandardMaterial({color:0xfbf7f0, roughness:1.0});
 const p1 = new THREE.Mesh(makePillow(), pillowMat);
-p1.position.set(-0.32, 0.68, -0.68);
+p1.position.set(-0.32, 0.715, -0.68);
 p1.rotation.y = 0.10; p1.rotation.z = 0.03;
 p1.castShadow = true; p1.receiveShadow = true;
 bed.add(p1);
 
 const p2 = new THREE.Mesh(makePillow(), pillowMat);
-p2.position.set(0.34, 0.68, -0.64);
+p2.position.set(0.34, 0.715, -0.64);
 p2.rotation.y = -0.12; p2.rotation.z = -0.02;
 p2.castShadow = true; p2.receiveShadow = true;
 bed.add(p2);
@@ -235,11 +267,11 @@ function fluff(color, r, x, y, z, sx=1, sy=1, sz=1){
   return mesh;
 }
 // 小陆（米色，靠在枕边）
-bed.add(fluff(0xe8d9c4, 0.13, -0.28, 0.80, -0.42, 1.0, 1.15, 0.9));
+bed.add(fluff(0xe8d9c4, 0.13, -0.28, 0.835, -0.42, 1.0, 1.15, 0.9));
 // 小鲸鱼（蓝，躺被子上）
-bed.add(fluff(0x7fa7c9, 0.11, 0.38, 0.78, 0.42, 1.5, 0.85, 0.9));
+bed.add(fluff(0x7fa7c9, 0.11, 0.38, 0.815, 0.42, 1.5, 0.85, 0.9));
 // 蟑螂（褐色毛毛虫，被角上）
-bed.add(fluff(0x8a6a4a, 0.075, -0.42, 0.78, 0.72, 2.0, 0.9, 0.9));
+bed.add(fluff(0x8a6a4a, 0.075, -0.42, 0.815, 0.72, 2.0, 0.9, 0.9));
 
 /* ---------- 渲染 ---------- */
 addEventListener('resize', ()=>{
