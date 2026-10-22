@@ -218,7 +218,7 @@ function makeQuilt(){
     //   上边卷得多、下边卷得少 —— 布的边缘是变薄的，不是整块沉下去
     const t = Math.max(0, (edge - 0.52) / 0.48);   // 52% 以内不卷
     if (t > 0){
-      const drop = t * t * 0.085;
+      const drop = t * t * 0.17;
       v.y -= (v.y > 0) ? drop : drop * 0.45;
       v.x *= 1 + t * 0.045;                // 卷下去的时候稍微往外摊
       v.z *= 1 + t * 0.045;
