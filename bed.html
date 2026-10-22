@@ -201,7 +201,8 @@ let quiltBendStart = 0.52;   // 从哪开始弯（0~1，越小弯得越早）
 let quiltBendDepth = 0.17;   // 卷多深
 function makeQuilt(){
   const W = 1.52, H = 0.11, D = 1.42;
-  const geo = new RoundedBoxGeometry(W, H, D, 10, 0.022);   // ★ 圆角（布软，比床垫圆）
+  // ★ 分段 10→28：弯的地方才有足够顶点，能顺下来而不是折角
+  const geo = new RoundedBoxGeometry(W, H, D, 28, 0.022);
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   const halfW = W/2, halfD = D/2;
@@ -210,15 +211,24 @@ function makeQuilt(){
     const nx = v.x/halfW, nz = v.z/halfD;
     const edge = Math.max(Math.abs(nx), Math.abs(nz));   // 0=正中间，1=最外沿
 
+    // 边缘往下转的进度（0~1），褶皱要按它收边，免得卷边处乱掉
+    const t = Math.max(0, (edge - quiltBendStart) / (1 - quiltBendStart));
+
     if (v.y > -0.006){                     // 只动上面那半
       const d2 = nx*nx*0.8 + nz*nz*0.5;
-      v.y -= Math.max(0, 1-d2) * 0.042;    // 中间压塌
-      v.y += Math.sin(nx*5.0)*0.007 + Math.sin(nz*4.0)*0.005;   // 褶皱
+      v.y -= Math.max(0, 1-d2) * 0.055;    // 中间压塌（比之前深）
+
+      // ★ 不规则褶皱：三组不同频率叠起来，避免像水面波纹
+      const wr =
+        Math.sin(nx*6.7 + nz*2.3) * 0.018 +
+        Math.sin(nz*8.9 - nx*3.7) * 0.014 +
+        Math.sin((nx+nz)*12.3) * 0.008 +
+        Math.sin(nx*4.3) * Math.sin(nz*5.7) * 0.016;
+      // 越靠边褶皱越平（那儿正在往下卷，不该再起皱）
+      v.y += wr * (1 - t * 0.75);
     }
 
-    // ★ 边缘往下转：越靠外越往床面落
-    //   上边卷得多、下边卷得少 —— 布的边缘是变薄的，不是整块沉下去
-    const t = Math.max(0, (edge - quiltBendStart) / (1 - quiltBendStart));
+    // ★ 边缘往下转：上边卷得多、下边卷得少 —— 布的边缘是变薄的
     if (t > 0){
       const drop = t * t * quiltBendDepth;
       v.y -= (v.y > 0) ? drop : drop * 0.45;
