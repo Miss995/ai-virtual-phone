@@ -198,18 +198,28 @@ const sheetMat = new THREE.MeshStandardMaterial({color:0xe6dfd5, roughness:1.0, 
 
 // 被子（盖住下半身那半张）
 function makeQuilt(){
-  const W=1.44, H=0.13, D=1.18;
-  const geo = new RoundedBoxGeometry(W, H, D, 6, 0.014);   // ★ 圆角
+  const W = 1.52, H = 0.11, D = 1.42;
+  const geo = new RoundedBoxGeometry(W, H, D, 10, 0.022);   // ★ 圆角（布软，比床垫圆）
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
+  const halfW = W/2, halfD = D/2;
   for (let i=0;i<pos.count;i++){
     v.fromBufferAttribute(pos, i);
-    if (v.y > H*0.3){
-      const nx=v.x/(W/2), nz=v.z/(D/2);
+    const nx = v.x/halfW, nz = v.z/halfD;
+    const edge = Math.max(Math.abs(nx), Math.abs(nz));   // 0=正中间，1=最外沿
+
+    if (v.y > -0.006){                     // 只动上面那半
       const d2 = nx*nx*0.8 + nz*nz*0.5;
-      v.y -= Math.max(0,1-d2)*0.055;
-      // 一点起伏，像有褶皱
-      v.y += Math.sin(nx*5.0)*0.008 + Math.sin(nz*4.0)*0.006;
+      v.y -= Math.max(0, 1-d2) * 0.042;    // 中间压塌
+      v.y += Math.sin(nx*5.0)*0.007 + Math.sin(nz*4.0)*0.005;   // 褶皱
+    }
+
+    // ★ 边缘往下转：越靠外越往床面里卷（上下一起卷，才不翻转）
+    const t = Math.max(0, (edge - 0.52) / 0.48);   // 52% 以内不卷
+    if (t > 0){
+      v.y -= t * t * 0.17;
+      v.x *= 1 + t * 0.03;                 // 卷下去的时候稍微往外摊
+      v.z *= 1 + t * 0.03;
     }
     pos.setXYZ(i, v.x, v.y, v.z);
   }
@@ -218,7 +228,7 @@ function makeQuilt(){
 }
 const quiltMat = new THREE.MeshStandardMaterial({color:0xd6c3b4, roughness:1.0, metalness:0.0});
 const quilt = new THREE.Mesh(makeQuilt(), quiltMat);
-quilt.position.set(0, 0.695, 0.44);
+quilt.position.set(0, 0.715, 0.40);
 quilt.castShadow = true; quilt.receiveShadow = true;
 bed.add(quilt);
 
