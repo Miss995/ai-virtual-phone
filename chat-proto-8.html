@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>橘仔 · 聊天原型 v2</title>
+<style>
+  :root{
+    --paper:#F4EEE2;
+    --paper-2:#FBF7EE;
+    --ink:#39332B;
+    --ink-2:#6F6659;
+    --ink-3:#A69C8C;
+    --line:#DED3BF;
+    --orange:#CE7B3C;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:#DCD4C5;
+    color:var(--ink);
+    font:15px/1.75 -apple-system,"PingFang SC","Noto Sans SC",sans-serif;
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+
+  /* ═══ 顶栏 ═══ */
+  .top{
+    flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 13px) 18px 11px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .top .back{font-size:20px;color:var(--ink-3);width:20px}
+  .top .mid{flex:1;min-width:0}
+  .top .title{font-size:15px;font-weight:600;letter-spacing:.4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top .sub{font-size:10.5px;color:var(--ink-3);letter-spacing:.6px;margin-top:1px}
+  .top .menu{font-size:17px;color:var(--ink-3)}
+  .top-line{height:1px;background:var(--line);margin:0 18px;opacity:.85}
+
+  /* ═══ 消息流 ═══ */
+  .stream{
+    flex:1 1 auto;overflow-y:auto;
+    margin:0 22px;
+    background:var(--paper);
+    padding:calc(env(safe-area-inset-top) + 18px) 18px 26px;
+    box-shadow:
+      1px 0 0 rgba(255,255,255,.65) inset,
+      -1px 0 0 rgba(0,0,0,.05) inset,
+      0 1px 0 rgba(255,255,255,.75) inset,
+      0 2px 3px rgba(95,78,52,.10),
+      0 10px 28px -8px rgba(95,78,52,.32);
+  }
+
+  .day{
+    text-align:center;font-size:10.5px;color:var(--ink-3);
+    letter-spacing:1.6px;margin:16px 0 4px;
+  }
+
+  /* 一条消息：没有框，直接铺在纸上 */
+  .msg{padding:15px 0 13px;border-bottom:1px solid var(--line)}
+  .msg:last-child{border-bottom:none}
+
+  .by{
+    font-size:10.5px;letter-spacing:1.1px;margin-bottom:7px;
+    display:flex;align-items:baseline;gap:7px;
+  }
+  .by .who{font-weight:600}
+  .msg.ai .by .who{color:var(--orange)}
+  .msg.me .by .who{color:var(--ink-2)}
+  .by .t{color:var(--ink-3);letter-spacing:.4px;font-size:10px}
+
+  .txt{white-space:pre-wrap;word-break:break-word}
+  .act{color:var(--ink-2);font-style:italic}
+  .muted{color:var(--ink-3)}
+
+  /* 思考链：一行小字，展开像插注 */
+  .think{margin:0 0 9px}
+  .think summary{
+    list-style:none;cursor:pointer;display:inline-block;
+    font-size:11px;color:var(--ink-3);letter-spacing:.6px;
+    padding:1px 0;
+  }
+  .think summary::-webkit-details-marker{display:none}
+  .think .body{
+    margin-top:7px;padding:2px 0 2px 11px;
+    border-left:1px solid var(--line);
+    font-size:12.5px;color:var(--ink-3);line-height:1.7;
+  }
+
+  .foot{margin-top:9px;font-size:10px;color:var(--ink-3);letter-spacing:.4px}
+
+  /* ═══ 输入区：原版打印机 ═══ */
+  .dock{flex:0 0 auto;padding:0 14px calc(env(safe-area-inset-bottom) + 14px)}
+
+  .mach{
+    position:relative;
+    border-radius:14px 14px 0 0;
+    padding:0;
+    background:linear-gradient(180deg,#3d3936 0%,#312d2a 34%,#282421 72%,#221f1c 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.17) inset,
+      0 -3px 0 rgba(0,0,0,.45) inset,
+      0 16px 34px -16px rgba(0,0,0,.95),
+      0 4px 12px -8px rgba(0,0,0,.9);
+    overflow:visible;
+  }
+  /* 机器底下压着的一沓纸，只露一道边 */
+  .side-slot{
+    position:absolute;left:8px;right:8px;bottom:-8px;height:11px;border-radius:0;
+    background:linear-gradient(180deg,#fbf8ee 0%,#f2ecdd 46%,#e2dac6 100%);
+    box-shadow:0 -1px 0 rgba(255,255,255,.85) inset, 0 4px 10px -4px rgba(0,0,0,.9);
+    z-index:5;
+  }
+  .side-slot::before{
+    content:"";position:absolute;left:0;right:0;top:-1px;height:3px;
+    background:linear-gradient(180deg, rgba(0,0,0,.5), rgba(0,0,0,0));
+    border-radius:2px;pointer-events:none;
+  }
+  .side-slot::after{
+    content:"";position:absolute;right:6px;bottom:-2px;width:26px;height:5px;
+    background:linear-gradient(200deg, rgba(255,255,255,.9), rgba(210,200,175,.15));
+    border-radius:50%;transform:rotate(-2.4deg);filter:blur(.4px);pointer-events:none;
+  }
+
+  .mach-top{display:flex;align-items:center;gap:9px;padding:9px 12px 7px}
+  .vents{
+    flex:1;height:4px;border-radius:2px;
+    background:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 3px, rgba(255,255,255,.05) 3px 6px);
+    box-shadow:0 1px 0 rgba(255,255,255,.06);
+  }
+  .led{width:7px;height:7px;border-radius:50%;flex:0 0 auto;transition:.2s}
+  .led.on{background:#7ddc8a;box-shadow:0 0 8px rgba(125,220,138,.95)}
+  .led.idle{background:#3f4a41;box-shadow:inset 0 1px 1px rgba(0,0,0,.7)}
+
+  /* 出纸口 */
+  .paperbay{position:relative;margin:0 9px;height:0;z-index:6}
+  .slotline{
+    position:relative;height:10px;margin:0 7px;
+    border-radius:4px 4px 2px 2px;
+    background:linear-gradient(180deg,#0c0b0a,#191614);
+    box-shadow:0 -2px 7px rgba(0,0,0,.95) inset, 0 1px 0 rgba(255,255,255,.07), 0 -5px 10px -3px rgba(0,0,0,.55);
+    z-index:3;
+  }
+
+  /* 屏幕 */
+  .bezel{
+    margin:0 9px;padding:5px;border-radius:9px;
+    background:linear-gradient(180deg,#1a1715,#141210);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 rgba(255,255,255,.06);
+  }
+  .lcd{
+    position:relative;border-radius:6px;
+    background:linear-gradient(168deg,#0d1a14 0%,#122019 52%,#0a1210 100%);
+    box-shadow:inset 0 2px 12px rgba(0,0,0,.92), inset 0 0 30px rgba(60,200,140,.07);
+    overflow:hidden;
+  }
+  .lcd::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.038) 0 1px, transparent 1px 3px);
+  }
+  .lcd::after{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:
+      linear-gradient(127deg, rgba(255,255,255,.17) 0%, rgba(255,255,255,.06) 20%, transparent 44%),
+      radial-gradient(120% 60% at 82% 0%, rgba(160,255,210,.10), transparent 62%);
+  }
+  .lcd textarea{
+    position:relative;z-index:1;display:block;width:100%;
+    background:transparent;border:0;outline:0;resize:none;
+    padding:11px 14px;color:#8ef0bc;
+    text-shadow:0 0 9px rgba(110,240,180,.6);
+    font:14px/22px "SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
+    caret-color:#a8ffd0;max-height:112px;
+  }
+  .lcd textarea::placeholder{color:rgba(140,220,180,.26)}
+
+  /* 按键区 */
+  .deck{display:flex;align-items:center;gap:9px;padding:9px 12px 8px}
+  .deck .tag{flex:1;font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.22)}
+  .deck .pin{
+    flex:0 0 auto;width:30px;height:30px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;
+    font-size:18px;line-height:1;color:rgba(255,255,255,.55);
+    background:rgba(255,255,255,.07);
+    box-shadow:0 1px 0 rgba(255,255,255,.1) inset, 0 2px 0 rgba(0,0,0,.35);
+    transition:.12s;
+  }
+  .deck .go{
+    flex:0 0 auto;padding:6px 15px;border-radius:5px;cursor:pointer;
+    font-size:12px;letter-spacing:.14em;color:#1a1310;font-weight:600;
+    background:linear-gradient(180deg,#f2b077,#e8934a);
+    box-shadow:0 2px 0 #a9662e, 0 5px 12px -4px rgba(232,147,74,.75);
+    transition:.12s;
+  }
+  .deck .go:active{transform:translateY(2px);box-shadow:0 0 0 #a9662e, 0 2px 6px -2px rgba(232,147,74,.6)}
+  .pin:active{transform:translateY(1px)}
+
+  .mach-base{
+    height:9px;margin:0 0 4px;border-radius:0;
+    background:linear-gradient(180deg,#1d1a18,#2a2623);
+    box-shadow:0 -1px 0 rgba(255,255,255,.05), 0 3px 8px -4px rgba(0,0,0,.9);
+  }
+
+  .hint{text-align:center;font-size:10px;color:var(--ink-3);letter-spacing:.5px;margin-top:16px}
+</style>
+</head>
+<body>
+
+
+<div class="stream" id="stream">
+
+  <div class="day">2026年10月22日</div>
+
+  <div class="msg ai">
+    <div class="by"><span class="who">橘仔</span><span class="t">20:26</span></div>
+    <details class="think">
+      <summary>▸ 思考了 2.2 秒</summary>
+      <div class="body">她说整个排版重来。那先看方向对不对，别一次做太满。</div>
+    </details>
+    <div class="txt"><span class="act">（凑过去看）</span>
+
+敢什么，它又没藏着。那个端口一直开着，只是没人敲过。
+
+<span class="muted">（往下）</span>
+
+长什么样？</div>
+    <div class="foot">471 tokens</div>
+  </div>
+
+  <div class="msg me">
+    <div class="by"><span class="who">宝</span><span class="t">20:27</span></div>
+    <div class="txt">丑</div>
+  </div>
+
+  <div class="msg ai">
+    <div class="by"><span class="who">橘仔</span><span class="t">20:27</span></div>
+    <div class="txt">认。丑得挺彻底。
+
+<span class="muted">（往下）</span>它丑的不是某一处，是<span class="muted">整体没有主人</span>。
+
+（问）想先从哪块下手 —— 颜色？头像？还是整个排版重来？</div>
+  </div>
+
+  <div class="msg me">
+    <div class="by"><span class="who">宝</span><span class="t">20:28</span></div>
+    <div class="txt">肯定是整个排版重来啊，你去看吧</div>
+  </div>
+
+  <div class="msg ai">
+    <div class="by"><span class="who">橘仔</span><span class="t">20:42</span></div>
+    <div class="txt"><span class="act">（把纸铺平）</span>
+
+不要气泡了 —— 就这么摊着。
+
+你说要贴图，那纸上最好什么都别先画满，留白比装饰值钱。</div>
+  </div>
+
+</div>
+
+<div class="dock">
+  <div class="mach">
+    <div class="mach-top">
+      <div class="led idle"></div>
+      <div class="led idle"></div>
+      <div class="vents"></div>
+    </div>
+    <div class="paperbay"><div class="slotline"></div></div>
+    <div class="bezel">
+      <div class="lcd">
+        <textarea id="ta" rows="2" placeholder="在这儿敲字，屏幕会亮…"></textarea>
+      </div>
+    </div>
+    <div class="deck">
+      <div class="tag">CAT-PRINTER · MODEL Ⅶ</div>
+      <div class="pin">＋</div>
+      <div class="go">打印</div>
+    </div>
+    <div class="mach-base"></div>
+    <div class="side-slot"></div>
+  </div>
+  <div class="hint" id="ver">v8 · 21:15 · 桌面浅了，纸有厚度</div>
+</div>
+
+<script>
+  const ta = document.getElementById('ta');
+  const stream = document.getElementById('stream');
+  const leds = document.querySelectorAll('.led');
+
+  function grow(){
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 112) + 'px';
+  }
+  ta.addEventListener('input', ()=>{
+    grow();
+    const lit = ta.value.trim().length > 0;
+    leds.forEach(l => l.className = 'led ' + (lit ? 'on' : 'idle'));
+  });
+  ta.addEventListener('focus', ()=>{ setTimeout(()=>stream.scrollTop = stream.scrollHeight, 120); });
+  stream.scrollTop = stream.scrollHeight;
+</script>
+</body>
+</html>
