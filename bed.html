@@ -214,12 +214,14 @@ function makeQuilt(){
       v.y += Math.sin(nx*5.0)*0.007 + Math.sin(nz*4.0)*0.005;   // 褶皱
     }
 
-    // ★ 边缘往下转：越靠外越往床面里卷（上下一起卷，才不翻转）
+    // ★ 边缘往下转：越靠外越往床面落
+    //   上边卷得多、下边卷得少 —— 布的边缘是变薄的，不是整块沉下去
     const t = Math.max(0, (edge - 0.52) / 0.48);   // 52% 以内不卷
     if (t > 0){
-      v.y -= t * t * 0.17;
-      v.x *= 1 + t * 0.03;                 // 卷下去的时候稍微往外摊
-      v.z *= 1 + t * 0.03;
+      const drop = t * t * 0.085;
+      v.y -= (v.y > 0) ? drop : drop * 0.45;
+      v.x *= 1 + t * 0.045;                // 卷下去的时候稍微往外摊
+      v.z *= 1 + t * 0.045;
     }
     pos.setXYZ(i, v.x, v.y, v.z);
   }
@@ -228,7 +230,7 @@ function makeQuilt(){
 }
 const quiltMat = new THREE.MeshStandardMaterial({color:0xd6c3b4, roughness:1.0, metalness:0.0});
 const quilt = new THREE.Mesh(makeQuilt(), quiltMat);
-quilt.position.set(0, 0.715, 0.40);
+quilt.position.set(0, 0.735, 0.40);
 quilt.castShadow = true; quilt.receiveShadow = true;
 bed.add(quilt);
 
