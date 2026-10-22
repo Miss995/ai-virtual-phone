@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>猫的表情包</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    padding: 16px 14px 40px;
+    font-family: -apple-system, "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #f5f2ec;
+    color: #3a352e;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 4px 0 14px;
+    letter-spacing: .5px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  h1 small {
+    font-size: 12px;
+    font-weight: 400;
+    color: #9b9384;
+  }
+  #drop {
+    border: 2px dashed #cfc7b8;
+    border-radius: 16px;
+    padding: 28px 16px;
+    text-align: center;
+    color: #9b9384;
+    font-size: 14px;
+    line-height: 1.9;
+    transition: .18s;
+    background: #fbf9f5;
+  }
+  #drop.hot {
+    border-color: #d9a441;
+    background: #fdf5e3;
+    color: #b8862c;
+  }
+  #drop b { color: #6b6152; font-weight: 600; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .cell {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cell img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+  }
+  .cell .x {
+    position: absolute;
+    top: 2px; right: 2px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.45);
+    color: #fff;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: .15s;
+  }
+  .cell:active .x, .cell:hover .x { opacity: 1; }
+  .empty {
+    text-align: center;
+    color: #b3ab9c;
+    font-size: 13px;
+    padding: 30px 0;
+  }
+  #viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(28,25,20,.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 24px;
+  }
+  #viewer.on { display: flex; }
+  #viewer img {
+    max-width: 100%;
+    max-height: 82vh;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 48px;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(40,36,30,.9);
+    color: #fff;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: .22s;
+    pointer-events: none;
+    z-index: 60;
+    white-space: nowrap;
+  }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<h1>猫的表情包 <small id="cnt"></small></h1>
+
+<div id="drop">
+  <b>把图拖进来</b><br>
+  或点这里选图片<br>
+  <span style="font-size:12px;opacity:.75">（存着的都在，不会丢）</span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div id="viewer"><img id="vimg" alt=""></div>
+<div id="toast"></div>
+
+<input type="file" id="picker" accept="image/*" multiple hidden>
+
+<script>
+const DB_NAME = 'sticker-box';
+const STORE = 'pics';
+let db = null;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE)) {
+        d.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    r.onsuccess = e => { db = e.target.result; res(db); };
+    r.onerror = e => rej(e);
+  });
+}
+
+function tx(mode) {
+  return db.transaction(STORE, mode).objectStore(STORE);
+}
+
+function put(blob, name) {
+  return new Promise((res, rej) => {
+    const req = tx('readwrite').add({ blob, name: name || '', ts: Date.now() });
+    req.onsuccess = () => res(req.result);
+    req.onerror = e => rej(e);
+  });
+}
+
+function all() {
+  return new Promise((res, rej) => {
+    const req = tx('readonly').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = e => rej(e);
+  });
+}
+
+function del(id) {
+  return new Promise((res, rej) => {
+    const req = tx('readwrite').delete(id);
+    req.onsuccess = () => res();
+    req.onerror = e => rej(e);
+  });
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('on'), 1600);
+}
+
+async function render() {
+  const grid = document.getElementById('grid');
+  const list = await all();
+  const cnt = document.getElementById('cnt');
+  cnt.textContent = list.length ? list.length + ' 张' : '';
+  grid.innerHTML = '';
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">还空着，拖几张进来试试</div>';
+    return;
+  }
+  list.sort((a, b) => a.id - b.id);
+  for (const item of list) {
+    const url = URL.createObjectURL(item.blob);
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = item.name || '';
+    cell.appendChild(img);
+
+    const x = document.createElement('div');
+    x.className = 'x';
+    x.textContent = '×';
+    x.onclick = async (e) => {
+      e.stopPropagation();
+      await del(item.id);
+      URL.revokeObjectURL(url);
+      render();
+      toast('删掉一张');
+    };
+    cell.appendChild(x);
+
+    cell.onclick = () => {
+      const v = document.getElementById('viewer');
+      document.getElementById('vimg').src = url;
+      v.classList.add('on');
+    };
+
+    grid.appendChild(cell);
+  }
+}
+
+async function addFiles(files) {
+  const imgs = [...files].filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) { toast('没有图片呀'); return; }
+  for (const f of imgs) {
+    await put(f, f.name || '');
+  }
+  render();
+  toast('存了 ' + imgs.length + ' 张');
+}
+
+const drop = document.getElementById('drop');
+const picker = document.getElementById('picker');
+
+['dragenter', 'dragover'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hot'); })
+);
+['dragleave', 'drop'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hot'); })
+);
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+    addFiles(e.dataTransfer.files);
+  } else {
+    toast('这个拖不动，试试从相册选');
+  }
+});
+drop.addEventListener('click', () => picker.click());
+picker.addEventListener('change', e => {
+  if (e.target.files.length) addFiles(e.target.files);
+  e.target.value = '';
+});
+
+document.getElementById('viewer').addEventListener('click', function () {
+  this.classList.remove('on');
+});
+
+openDB().then(render).catch(err => {
+  document.getElementById('grid').innerHTML =
+    '<div class="empty" style="grid-column:1/-1">打不开本地存储：' + err + '</div>';
+});
+</script>
+</body>
+</html>
