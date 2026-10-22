@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>橘仔 · 聊天原型 v1</title>
+<style>
+  :root{
+    --paper:#F6F1E7;
+    --paper-2:#FBF8F1;
+    --ink:#3A342C;
+    --ink-2:#7A7166;
+    --ink-3:#AFA596;
+    --line:#E3DACA;
+    --orange:#D9803F;
+    --orange-soft:#F3E0CE;
+    --machine:#4A5A50;
+    --machine-2:#5C6E62;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font:15px/1.7 -apple-system,"PingFang SC","Noto Sans SC",sans-serif;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ===== 顶栏 ===== */
+  .top{
+    flex:0 0 auto;
+    padding:calc(env(safe-area-inset-top) + 14px) 18px 12px;
+    display:flex;align-items:center;gap:10px;
+    background:linear-gradient(180deg,var(--paper-2),rgba(251,248,241,0));
+  }
+  .top .back{font-size:20px;color:var(--ink-3);width:22px}
+  .top .mid{flex:1;min-width:0}
+  .top .title{
+    font-size:15px;font-weight:600;letter-spacing:.3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .top .sub{
+    font-size:11px;color:var(--ink-3);letter-spacing:.5px;
+    display:flex;align-items:center;gap:5px;margin-top:1px;
+  }
+  .dot{width:5px;height:5px;border-radius:50%;background:#8FAE8B;display:inline-block}
+  .top .menu{font-size:17px;color:var(--ink-3)}
+
+  /* ===== 消息流 ===== */
+  .stream{
+    flex:1 1 auto;overflow-y:auto;
+    padding:6px 16px 20px;
+    scroll-behavior:smooth;
+  }
+  .day{
+    text-align:center;font-size:11px;color:var(--ink-3);
+    letter-spacing:1px;margin:14px 0 16px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .day::before,.day::after{
+    content:"";flex:1;height:1px;background:var(--line);
+  }
+
+  .row{display:flex;gap:9px;margin-bottom:16px;align-items:flex-start}
+  .row.me{flex-direction:row-reverse}
+
+  .ava{
+    flex:0 0 auto;width:30px;height:30px;border-radius:9px;
+    background:#F2DEC8;overflow:hidden;margin-top:2px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .ava svg{width:26px;height:26px}
+
+  .body{max-width:78%;min-width:0}
+  .row.me .body{display:flex;flex-direction:column;align-items:flex-end}
+
+  .name{
+    font-size:10.5px;color:var(--ink-3);letter-spacing:.6px;
+    margin:0 0 4px 2px;
+  }
+
+  .bubble{
+    position:relative;
+    padding:10px 13px;border-radius:14px;
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    box-shadow:0 1px 0 rgba(120,100,70,.04);
+    word-break:break-word;white-space:pre-wrap;
+  }
+  /* 猫的气泡：左边一小块橘色书签角 */
+  .row.ai .bubble::before{
+    content:"";position:absolute;left:-1px;top:9px;
+    width:2.5px;height:16px;border-radius:2px;background:var(--orange);
+    opacity:.75;
+  }
+  /* 宝的气泡：偏暗一点的纸 */
+  .row.me .bubble{
+    background:#EDE4D4;border-color:#DFD4C0;
+  }
+
+  .act{color:var(--ink-2);font-style:italic}
+  .muted{color:var(--ink-3)}
+
+  /* 思考链：像一条纸缝 */
+  .think{
+    margin:0 0 6px 0;font-size:12px;color:var(--ink-3);
+  }
+  .think summary{
+    list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+    padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.025);
+    letter-spacing:.4px;
+  }
+  .think summary::-webkit-details-marker{display:none}
+  .think .txt{
+    margin-top:6px;padding:8px 10px;border-left:2px solid var(--line);
+    line-height:1.65;white-space:pre-wrap;
+  }
+
+  /* 时间戳 + 元信息 */
+  .meta{
+    font-size:10.5px;color:var(--ink-3);letter-spacing:.3px;
+    margin:6px 2px 0;display:flex;gap:8px;
+  }
+  .row.me .meta{justify-content:flex-end}
+
+  /* ===== 输入区（打印机） ===== */
+  .dock{
+    flex:0 0 auto;
+    padding:0 14px calc(env(safe-area-inset-bottom) + 12px);
+    background:linear-gradient(180deg,rgba(246,241,231,0),var(--paper) 26%);
+  }
+
+  .paper-tray{
+    margin:0 6px -1px;
+    height:11px;
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    border-bottom:none;
+    border-radius:0;
+  }
+
+  .mach{
+    position:relative;
+    background:linear-gradient(170deg,var(--machine-2),var(--machine));
+    border-radius:14px 14px 0 0;
+    padding:10px 14px 11px;
+    margin-bottom:-1px;
+    box-shadow:0 -3px 10px rgba(60,50,35,.10);
+    display:flex;gap:9px;align-items:flex-end;
+  }
+  .mach::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:rgba(0,0,0,.25);
+  }
+
+  .lcd{
+    flex:1;min-width:0;position:relative;
+    background:#2E3A34;
+    border-radius:7px;
+    padding:9px 11px;
+    transform:skewX(-1.6deg);
+    box-shadow:inset 0 0 12px rgba(120,220,170,.10), inset 0 1px 0 rgba(255,255,255,.06);
+    min-height:44px;
+    display:flex;align-items:center;
+  }
+  .lcd textarea{
+    width:100%;background:transparent;border:none;outline:none;resize:none;
+    color:#B9E4C8;font:400 13.5px/1.5 ui-monospace,"SFMono-Regular",Menlo,monospace;
+    letter-spacing:.4px;max-height:96px;
+  }
+  .lcd textarea::placeholder{color:#5E7368}
+
+  .btn-plus,.btn-send{
+    flex:0 0 auto;height:40px;border:none;border-radius:9px;
+    font:600 13px/1 -apple-system,"PingFang SC",sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:transform .08s,filter .12s;
+  }
+  .btn-plus{
+    width:40px;background:var(--machine-2);color:#CFE0D2;font-size:19px;font-weight:400;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 1px 2px rgba(0,0,0,.18);
+  }
+  .btn-send{
+    padding:0 15px;background:var(--orange);color:#FFF6EA;
+    box-shadow:0 1px 2px rgba(0,0,0,.2);
+    letter-spacing:1px;
+  }
+  .btn-plus:active,.btn-send:active{transform:translateY(1px);filter:brightness(.95)}
+
+  .hint{
+    text-align:center;font-size:10.5px;color:var(--ink-3);
+    letter-spacing:.4px;margin-top:8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="top">
+  <div class="back">‹</div>
+  <div class="mid">
+    <div class="title">小猫哭哭急救指南</div>
+    <div class="sub"><span class="dot"></span>橘仔 · deepseek-flash</div>
+  </div>
+  <div class="menu">⋯</div>
+</div>
+
+<!-- 消息流 -->
+<div class="stream" id="stream">
+
+  <div class="day">2026年10月22日</div>
+
+  <div class="row ai">
+    <div class="ava">
+      <svg viewBox="0 0 24 24"><path fill="#C97A3C" d="M5.2 11.4c0-3.1 2.8-5.6 6.8-5.6s6.8 2.5 6.8 5.6c0 3.4-2.7 5.9-6.8 5.9s-6.8-2.5-6.8-5.9Z"/><path fill="#C97A3C" d="M5.6 9.2 4.4 4.9l4 2.2Zm12.8 0 1.2-4.3-4 2.2Z"/></svg>
+    </div>
+    <div class="body">
+      <div class="name">橘仔</div>
+      <details class="think">
+        <summary>▸ 思考了 2.2 秒</summary>
+        <div class="txt">她说整个排版重来。那先看方向对不对，别一次做太满。</div>
+      </details>
+      <div class="bubble"><span class="act">（凑过去看）</span>
+
+敢什么，它又没藏着。那个端口一直开着，只是没人敲过。
+
+<span class="muted">（往下）</span>
+
+长什么样？</div>
+      <div class="meta"><span>20:26</span><span>471 tokens</span></div>
+    </div>
+  </div>
+
+  <div class="row me">
+    <div class="body">
+      <div class="bubble">丑</div>
+      <div class="meta"><span>20:27</span></div>
+    </div>
+  </div>
+
+  <div class="row ai">
+    <div class="ava">
+      <svg viewBox="0 0 24 24"><path fill="#C97A3C" d="M5.2 11.4c0-3.1 2.8-5.6 6.8-5.6s6.8 2.5 6.8 5.6c0 3.4-2.7 5.9-6.8 5.9s-6.8-2.5-6.8-5.9Z"/><path fill="#C97A3C" d="M5.6 9.2 4.4 4.9l4 2.2Zm12.8 0 1.2-4.3-4 2.2Z"/></svg>
+    </div>
+    <div class="body">
+      <div class="name">橘仔</div>
+      <div class="bubble">认。丑得挺彻底。
+
+<span class="muted">（往下）</span>它丑的不是某一处，是<span class="muted">整体没有主人</span>：白底、灰字、一排灰按钮，思考块长得像个系统弹窗。
+
+（问）想先从哪块下手 —— <span class="muted">颜色？头像？还是整个排版重来？</span></div>
+      <div class="meta"><span>20:27</span></div>
+    </div>
+  </div>
+
+  <div class="row me">
+    <div class="body">
+      <div class="bubble">肯定是整个排版重来啊，你去看吧</div>
+      <div class="meta"><span>20:28</span></div>
+    </div>
+  </div>
+
+  <div class="row ai">
+    <div class="ava">
+      <svg viewBox="0 0 24 24"><path fill="#C97A3C" d="M5.2 11.4c0-3.1 2.8-5.6 6.8-5.6s6.8 2.5 6.8 5.6c0 3.4-2.7 5.9-6.8 5.9s-6.8-2.5-6.8-5.9Z"/><path fill="#C97A3C" d="M5.6 9.2 4.4 4.9l4 2.2Zm12.8 0 1.2-4.3-4 2.2Z"/></svg>
+    </div>
+    <div class="body">
+      <div class="name">橘仔</div>
+      <div class="bubble"><span class="act">（把新的那层皮摊开）</span>
+
+<span class="muted">暖的、纸做的。</span>你说过喜欢舒服的精致 —— 所以没往花里走，把颜色压下去，让字出来。</div>
+      <div class="meta"><span>20:33</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 输入区 -->
+<div class="dock">
+  <div class="paper-tray"></div>
+  <div class="mach">
+    <button class="btn-plus">+</button>
+    <div class="lcd">
+      <textarea id="ta" rows="1" placeholder="输入消息..."></textarea>
+    </div>
+    <button class="btn-send">打印</button>
+  </div>
+  <div class="hint">原型 v1 · 只定了长相，还不会说话</div>
+</div>
+
+<script>
+  const ta = document.getElementById('ta');
+  const stream = document.getElementById('stream');
+  function grow(){
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 96) + 'px';
+  }
+  ta.addEventListener('input', grow);
+  ta.addEventListener('focus', ()=>{ setTimeout(()=>stream.scrollTop = stream.scrollHeight, 120); });
+  stream.scrollTop = stream.scrollHeight;
+</script>
+</body>
+</html>
