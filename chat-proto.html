@@ -3,300 +3,298 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>橘仔 · 聊天原型 v1</title>
+<title>橘仔 · 聊天原型 v2</title>
 <style>
   :root{
-    --paper:#F6F1E7;
-    --paper-2:#FBF8F1;
-    --ink:#3A342C;
-    --ink-2:#7A7166;
-    --ink-3:#AFA596;
-    --line:#E3DACA;
-    --orange:#D9803F;
-    --orange-soft:#F3E0CE;
-    --machine:#4A5A50;
-    --machine-2:#5C6E62;
+    --paper:#F4EEE2;
+    --paper-2:#FBF7EE;
+    --ink:#39332B;
+    --ink-2:#6F6659;
+    --ink-3:#A69C8C;
+    --line:#DED3BF;
+    --orange:#CE7B3C;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
   body{
     background:var(--paper);
     color:var(--ink);
-    font:15px/1.7 -apple-system,"PingFang SC","Noto Sans SC",sans-serif;
-    display:flex;flex-direction:column;
-    overflow:hidden;
+    font:15px/1.75 -apple-system,"PingFang SC","Noto Sans SC",sans-serif;
+    display:flex;flex-direction:column;overflow:hidden;
+    /* 纸纹 */
+    background-image:
+      repeating-linear-gradient(0deg, rgba(160,140,105,.022) 0 1px, transparent 1px 3px);
   }
 
-  /* ===== 顶栏 ===== */
+  /* ═══ 顶栏 ═══ */
   .top{
-    flex:0 0 auto;
-    padding:calc(env(safe-area-inset-top) + 14px) 18px 12px;
+    flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 13px) 18px 11px;
     display:flex;align-items:center;gap:10px;
-    background:linear-gradient(180deg,var(--paper-2),rgba(251,248,241,0));
   }
-  .top .back{font-size:20px;color:var(--ink-3);width:22px}
+  .top .back{font-size:20px;color:var(--ink-3);width:20px}
   .top .mid{flex:1;min-width:0}
-  .top .title{
-    font-size:15px;font-weight:600;letter-spacing:.3px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  .top .sub{
-    font-size:11px;color:var(--ink-3);letter-spacing:.5px;
-    display:flex;align-items:center;gap:5px;margin-top:1px;
-  }
-  .dot{width:5px;height:5px;border-radius:50%;background:#8FAE8B;display:inline-block}
+  .top .title{font-size:15px;font-weight:600;letter-spacing:.4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top .sub{font-size:10.5px;color:var(--ink-3);letter-spacing:.6px;margin-top:1px}
   .top .menu{font-size:17px;color:var(--ink-3)}
+  .top-line{height:1px;background:var(--line);margin:0 18px;opacity:.85}
 
-  /* ===== 消息流 ===== */
-  .stream{
-    flex:1 1 auto;overflow-y:auto;
-    padding:6px 16px 20px;
-    scroll-behavior:smooth;
-  }
+  /* ═══ 消息流 ═══ */
+  .stream{flex:1 1 auto;overflow-y:auto;padding:4px 18px 26px}
+
   .day{
-    text-align:center;font-size:11px;color:var(--ink-3);
-    letter-spacing:1px;margin:14px 0 16px;
-    display:flex;align-items:center;gap:10px;
-  }
-  .day::before,.day::after{
-    content:"";flex:1;height:1px;background:var(--line);
+    text-align:center;font-size:10.5px;color:var(--ink-3);
+    letter-spacing:1.6px;margin:16px 0 4px;
   }
 
-  .row{display:flex;gap:9px;margin-bottom:16px;align-items:flex-start}
-  .row.me{flex-direction:row-reverse}
+  /* 一条消息：没有框，直接铺在纸上 */
+  .msg{padding:15px 0 13px;border-bottom:1px solid var(--line)}
+  .msg:last-child{border-bottom:none}
 
-  .ava{
-    flex:0 0 auto;width:30px;height:30px;border-radius:9px;
-    background:#F2DEC8;overflow:hidden;margin-top:2px;
-    display:flex;align-items:center;justify-content:center;
+  .by{
+    font-size:10.5px;letter-spacing:1.1px;margin-bottom:7px;
+    display:flex;align-items:baseline;gap:7px;
   }
-  .ava svg{width:26px;height:26px}
+  .by .who{font-weight:600}
+  .msg.ai .by .who{color:var(--orange)}
+  .msg.me .by .who{color:var(--ink-2)}
+  .by .t{color:var(--ink-3);letter-spacing:.4px;font-size:10px}
 
-  .body{max-width:78%;min-width:0}
-  .row.me .body{display:flex;flex-direction:column;align-items:flex-end}
-
-  .name{
-    font-size:10.5px;color:var(--ink-3);letter-spacing:.6px;
-    margin:0 0 4px 2px;
-  }
-
-  .bubble{
-    position:relative;
-    padding:10px 13px;border-radius:14px;
-    background:var(--paper-2);
-    border:1px solid var(--line);
-    box-shadow:0 1px 0 rgba(120,100,70,.04);
-    word-break:break-word;white-space:pre-wrap;
-  }
-  /* 猫的气泡：左边一小块橘色书签角 */
-  .row.ai .bubble::before{
-    content:"";position:absolute;left:-1px;top:9px;
-    width:2.5px;height:16px;border-radius:2px;background:var(--orange);
-    opacity:.75;
-  }
-  /* 宝的气泡：偏暗一点的纸 */
-  .row.me .bubble{
-    background:#EDE4D4;border-color:#DFD4C0;
-  }
-
+  .txt{white-space:pre-wrap;word-break:break-word}
   .act{color:var(--ink-2);font-style:italic}
   .muted{color:var(--ink-3)}
 
-  /* 思考链：像一条纸缝 */
-  .think{
-    margin:0 0 6px 0;font-size:12px;color:var(--ink-3);
-  }
+  /* 思考链：一行小字，展开像插注 */
+  .think{margin:0 0 9px}
   .think summary{
-    list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;
-    padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.025);
-    letter-spacing:.4px;
+    list-style:none;cursor:pointer;display:inline-block;
+    font-size:11px;color:var(--ink-3);letter-spacing:.6px;
+    padding:1px 0;
   }
   .think summary::-webkit-details-marker{display:none}
-  .think .txt{
-    margin-top:6px;padding:8px 10px;border-left:2px solid var(--line);
-    line-height:1.65;white-space:pre-wrap;
+  .think .body{
+    margin-top:7px;padding:2px 0 2px 11px;
+    border-left:1px solid var(--line);
+    font-size:12.5px;color:var(--ink-3);line-height:1.7;
   }
 
-  /* 时间戳 + 元信息 */
-  .meta{
-    font-size:10.5px;color:var(--ink-3);letter-spacing:.3px;
-    margin:6px 2px 0;display:flex;gap:8px;
-  }
-  .row.me .meta{justify-content:flex-end}
+  .foot{margin-top:9px;font-size:10px;color:var(--ink-3);letter-spacing:.4px}
 
-  /* ===== 输入区（打印机） ===== */
-  .dock{
-    flex:0 0 auto;
-    padding:0 14px calc(env(safe-area-inset-bottom) + 12px);
-    background:linear-gradient(180deg,rgba(246,241,231,0),var(--paper) 26%);
-  }
-
-  .paper-tray{
-    margin:0 6px -1px;
-    height:11px;
-    background:var(--paper-2);
-    border:1px solid var(--line);
-    border-bottom:none;
-    border-radius:0;
-  }
+  /* ═══ 输入区：原版打印机 ═══ */
+  .dock{flex:0 0 auto;padding:0 14px calc(env(safe-area-inset-bottom) + 14px)}
 
   .mach{
     position:relative;
-    background:linear-gradient(170deg,var(--machine-2),var(--machine));
     border-radius:14px 14px 0 0;
-    padding:10px 14px 11px;
-    margin-bottom:-1px;
-    box-shadow:0 -3px 10px rgba(60,50,35,.10);
-    display:flex;gap:9px;align-items:flex-end;
+    padding:0;
+    background:linear-gradient(180deg,#3d3936 0%,#312d2a 34%,#282421 72%,#221f1c 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.17) inset,
+      0 -3px 0 rgba(0,0,0,.45) inset,
+      0 16px 34px -16px rgba(0,0,0,.95),
+      0 4px 12px -8px rgba(0,0,0,.9);
+    overflow:visible;
   }
-  .mach::after{
-    content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
-    background:rgba(0,0,0,.25);
+  /* 机器底下压着的一沓纸，只露一道边 */
+  .side-slot{
+    position:absolute;left:8px;right:8px;bottom:-8px;height:11px;border-radius:0;
+    background:linear-gradient(180deg,#fbf8ee 0%,#f2ecdd 46%,#e2dac6 100%);
+    box-shadow:0 -1px 0 rgba(255,255,255,.85) inset, 0 4px 10px -4px rgba(0,0,0,.9);
+    z-index:5;
+  }
+  .side-slot::before{
+    content:"";position:absolute;left:0;right:0;top:-1px;height:3px;
+    background:linear-gradient(180deg, rgba(0,0,0,.5), rgba(0,0,0,0));
+    border-radius:2px;pointer-events:none;
+  }
+  .side-slot::after{
+    content:"";position:absolute;right:6px;bottom:-2px;width:26px;height:5px;
+    background:linear-gradient(200deg, rgba(255,255,255,.9), rgba(210,200,175,.15));
+    border-radius:50%;transform:rotate(-2.4deg);filter:blur(.4px);pointer-events:none;
   }
 
+  .mach-top{display:flex;align-items:center;gap:9px;padding:9px 12px 7px}
+  .vents{
+    flex:1;height:4px;border-radius:2px;
+    background:repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 3px, rgba(255,255,255,.05) 3px 6px);
+    box-shadow:0 1px 0 rgba(255,255,255,.06);
+  }
+  .led{width:7px;height:7px;border-radius:50%;flex:0 0 auto;transition:.2s}
+  .led.on{background:#7ddc8a;box-shadow:0 0 8px rgba(125,220,138,.95)}
+  .led.idle{background:#3f4a41;box-shadow:inset 0 1px 1px rgba(0,0,0,.7)}
+
+  /* 出纸口 */
+  .paperbay{position:relative;margin:0 9px;height:0;z-index:6}
+  .slotline{
+    position:relative;height:10px;margin:0 7px;
+    border-radius:4px 4px 2px 2px;
+    background:linear-gradient(180deg,#0c0b0a,#191614);
+    box-shadow:0 -2px 7px rgba(0,0,0,.95) inset, 0 1px 0 rgba(255,255,255,.07), 0 -5px 10px -3px rgba(0,0,0,.55);
+    z-index:3;
+  }
+
+  /* 屏幕 */
+  .bezel{
+    margin:0 9px;padding:5px;border-radius:9px;
+    background:linear-gradient(180deg,#1a1715,#141210);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 1px 0 rgba(255,255,255,.06);
+  }
   .lcd{
-    flex:1;min-width:0;position:relative;
-    background:#2E3A34;
-    border-radius:7px;
-    padding:9px 11px;
-    transform:skewX(-1.6deg);
-    box-shadow:inset 0 0 12px rgba(120,220,170,.10), inset 0 1px 0 rgba(255,255,255,.06);
-    min-height:44px;
-    display:flex;align-items:center;
+    position:relative;border-radius:6px;
+    background:linear-gradient(168deg,#0d1a14 0%,#122019 52%,#0a1210 100%);
+    box-shadow:inset 0 2px 12px rgba(0,0,0,.92), inset 0 0 30px rgba(60,200,140,.07);
+    overflow:hidden;
+  }
+  .lcd::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.038) 0 1px, transparent 1px 3px);
+  }
+  .lcd::after{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+    background:
+      linear-gradient(127deg, rgba(255,255,255,.17) 0%, rgba(255,255,255,.06) 20%, transparent 44%),
+      radial-gradient(120% 60% at 82% 0%, rgba(160,255,210,.10), transparent 62%);
   }
   .lcd textarea{
-    width:100%;background:transparent;border:none;outline:none;resize:none;
-    color:#B9E4C8;font:400 13.5px/1.5 ui-monospace,"SFMono-Regular",Menlo,monospace;
-    letter-spacing:.4px;max-height:96px;
+    position:relative;z-index:1;display:block;width:100%;
+    background:transparent;border:0;outline:0;resize:none;
+    padding:11px 14px;color:#8ef0bc;
+    text-shadow:0 0 9px rgba(110,240,180,.6);
+    font:14px/22px "SF Mono","Menlo","Consolas","Noto Sans Mono CJK SC",monospace;
+    caret-color:#a8ffd0;max-height:112px;
   }
-  .lcd textarea::placeholder{color:#5E7368}
+  .lcd textarea::placeholder{color:rgba(140,220,180,.26)}
 
-  .btn-plus,.btn-send{
-    flex:0 0 auto;height:40px;border:none;border-radius:9px;
-    font:600 13px/1 -apple-system,"PingFang SC",sans-serif;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;transition:transform .08s,filter .12s;
+  /* 按键区 */
+  .deck{display:flex;align-items:center;gap:9px;padding:9px 12px 8px}
+  .deck .tag{flex:1;font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.22)}
+  .deck .pin{
+    flex:0 0 auto;width:30px;height:30px;border-radius:50%;
+    display:grid;place-items:center;cursor:pointer;
+    font-size:18px;line-height:1;color:rgba(255,255,255,.55);
+    background:rgba(255,255,255,.07);
+    box-shadow:0 1px 0 rgba(255,255,255,.1) inset, 0 2px 0 rgba(0,0,0,.35);
+    transition:.12s;
   }
-  .btn-plus{
-    width:40px;background:var(--machine-2);color:#CFE0D2;font-size:19px;font-weight:400;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 1px 2px rgba(0,0,0,.18);
+  .deck .go{
+    flex:0 0 auto;padding:6px 15px;border-radius:5px;cursor:pointer;
+    font-size:12px;letter-spacing:.14em;color:#1a1310;font-weight:600;
+    background:linear-gradient(180deg,#f2b077,#e8934a);
+    box-shadow:0 2px 0 #a9662e, 0 5px 12px -4px rgba(232,147,74,.75);
+    transition:.12s;
   }
-  .btn-send{
-    padding:0 15px;background:var(--orange);color:#FFF6EA;
-    box-shadow:0 1px 2px rgba(0,0,0,.2);
-    letter-spacing:1px;
-  }
-  .btn-plus:active,.btn-send:active{transform:translateY(1px);filter:brightness(.95)}
+  .deck .go:active{transform:translateY(2px);box-shadow:0 0 0 #a9662e, 0 2px 6px -2px rgba(232,147,74,.6)}
+  .pin:active{transform:translateY(1px)}
 
-  .hint{
-    text-align:center;font-size:10.5px;color:var(--ink-3);
-    letter-spacing:.4px;margin-top:8px;
+  .mach-base{
+    height:9px;margin:0 0 4px;border-radius:0;
+    background:linear-gradient(180deg,#1d1a18,#2a2623);
+    box-shadow:0 -1px 0 rgba(255,255,255,.05), 0 3px 8px -4px rgba(0,0,0,.9);
   }
+
+  .hint{text-align:center;font-size:10px;color:var(--ink-3);letter-spacing:.5px;margin-top:16px}
 </style>
 </head>
 <body>
 
-<!-- 顶栏 -->
 <div class="top">
   <div class="back">‹</div>
   <div class="mid">
     <div class="title">小猫哭哭急救指南</div>
-    <div class="sub"><span class="dot"></span>橘仔 · deepseek-flash</div>
+    <div class="sub">橘仔 · deepseek-flash</div>
   </div>
   <div class="menu">⋯</div>
 </div>
+<div class="top-line"></div>
 
-<!-- 消息流 -->
 <div class="stream" id="stream">
 
   <div class="day">2026年10月22日</div>
 
-  <div class="row ai">
-    <div class="ava">
-      <svg viewBox="0 0 24 24"><path fill="#C97A3C" d="M5.2 11.4c0-3.1 2.8-5.6 6.8-5.6s6.8 2.5 6.8 5.6c0 3.4-2.7 5.9-6.8 5.9s-6.8-2.5-6.8-5.9Z"/><path fill="#C97A3C" d="M5.6 9.2 4.4 4.9l4 2.2Zm12.8 0 1.2-4.3-4 2.2Z"/></svg>
-    </div>
-    <div class="body">
-      <div class="name">橘仔</div>
-      <details class="think">
-        <summary>▸ 思考了 2.2 秒</summary>
-        <div class="txt">她说整个排版重来。那先看方向对不对，别一次做太满。</div>
-      </details>
-      <div class="bubble"><span class="act">（凑过去看）</span>
+  <div class="msg ai">
+    <div class="by"><span class="who">橘仔</span><span class="t">20:26</span></div>
+    <details class="think">
+      <summary>▸ 思考了 2.2 秒</summary>
+      <div class="body">她说整个排版重来。那先看方向对不对，别一次做太满。</div>
+    </details>
+    <div class="txt"><span class="act">（凑过去看）</span>
 
 敢什么，它又没藏着。那个端口一直开着，只是没人敲过。
 
 <span class="muted">（往下）</span>
 
 长什么样？</div>
-      <div class="meta"><span>20:26</span><span>471 tokens</span></div>
-    </div>
+    <div class="foot">471 tokens</div>
   </div>
 
-  <div class="row me">
-    <div class="body">
-      <div class="bubble">丑</div>
-      <div class="meta"><span>20:27</span></div>
-    </div>
+  <div class="msg me">
+    <div class="by"><span class="who">宝</span><span class="t">20:27</span></div>
+    <div class="txt">丑</div>
   </div>
 
-  <div class="row ai">
-    <div class="ava">
-      <svg viewBox="0 0 24 24"><path fill="#C97A3C" d="M5.2 11.4c0-3.1 2.8-5.6 6.8-5.6s6.8 2.5 6.8 5.6c0 3.4-2.7 5.9-6.8 5.9s-6.8-2.5-6.8-5.9Z"/><path fill="#C97A3C" d="M5.6 9.2 4.4 4.9l4 2.2Zm12.8 0 1.2-4.3-4 2.2Z"/></svg>
-    </div>
-    <div class="body">
-      <div class="name">橘仔</div>
-      <div class="bubble">认。丑得挺彻底。
+  <div class="msg ai">
+    <div class="by"><span class="who">橘仔</span><span class="t">20:27</span></div>
+    <div class="txt">认。丑得挺彻底。
 
-<span class="muted">（往下）</span>它丑的不是某一处，是<span class="muted">整体没有主人</span>：白底、灰字、一排灰按钮，思考块长得像个系统弹窗。
+<span class="muted">（往下）</span>它丑的不是某一处，是<span class="muted">整体没有主人</span>。
 
-（问）想先从哪块下手 —— <span class="muted">颜色？头像？还是整个排版重来？</span></div>
-      <div class="meta"><span>20:27</span></div>
-    </div>
+（问）想先从哪块下手 —— 颜色？头像？还是整个排版重来？</div>
   </div>
 
-  <div class="row me">
-    <div class="body">
-      <div class="bubble">肯定是整个排版重来啊，你去看吧</div>
-      <div class="meta"><span>20:28</span></div>
-    </div>
+  <div class="msg me">
+    <div class="by"><span class="who">宝</span><span class="t">20:28</span></div>
+    <div class="txt">肯定是整个排版重来啊，你去看吧</div>
   </div>
 
-  <div class="row ai">
-    <div class="ava">
-      <svg viewBox="0 0 24 24"><path fill="#C97A3C" d="M5.2 11.4c0-3.1 2.8-5.6 6.8-5.6s6.8 2.5 6.8 5.6c0 3.4-2.7 5.9-6.8 5.9s-6.8-2.5-6.8-5.9Z"/><path fill="#C97A3C" d="M5.6 9.2 4.4 4.9l4 2.2Zm12.8 0 1.2-4.3-4 2.2Z"/></svg>
-    </div>
-    <div class="body">
-      <div class="name">橘仔</div>
-      <div class="bubble"><span class="act">（把新的那层皮摊开）</span>
+  <div class="msg ai">
+    <div class="by"><span class="who">橘仔</span><span class="t">20:42</span></div>
+    <div class="txt"><span class="act">（把纸铺平）</span>
 
-<span class="muted">暖的、纸做的。</span>你说过喜欢舒服的精致 —— 所以没往花里走，把颜色压下去，让字出来。</div>
-      <div class="meta"><span>20:33</span></div>
-    </div>
+不要气泡了 —— 就这么摊着。
+
+你说要贴图，那纸上最好什么都别先画满，留白比装饰值钱。</div>
   </div>
 
 </div>
 
-<!-- 输入区 -->
 <div class="dock">
-  <div class="paper-tray"></div>
   <div class="mach">
-    <button class="btn-plus">+</button>
-    <div class="lcd">
-      <textarea id="ta" rows="1" placeholder="输入消息..."></textarea>
+    <div class="mach-top">
+      <div class="led idle"></div>
+      <div class="led idle"></div>
+      <div class="vents"></div>
     </div>
-    <button class="btn-send">打印</button>
+    <div class="paperbay"><div class="slotline"></div></div>
+    <div class="bezel">
+      <div class="lcd">
+        <textarea id="ta" rows="2" placeholder="在这儿敲字，屏幕会亮…"></textarea>
+      </div>
+    </div>
+    <div class="deck">
+      <div class="tag">CAT-PRINTER · MODEL Ⅶ</div>
+      <div class="pin">＋</div>
+      <div class="go">打印</div>
+    </div>
+    <div class="mach-base"></div>
+    <div class="side-slot"></div>
   </div>
-  <div class="hint">原型 v1 · 只定了长相，还不会说话</div>
+  <div class="hint">原型 v2 · 只定了长相，还不会说话</div>
 </div>
 
 <script>
   const ta = document.getElementById('ta');
   const stream = document.getElementById('stream');
+  const leds = document.querySelectorAll('.led');
+
   function grow(){
     ta.style.height = 'auto';
-    ta.style.height = Math.min(ta.scrollHeight, 96) + 'px';
+    ta.style.height = Math.min(ta.scrollHeight, 112) + 'px';
   }
-  ta.addEventListener('input', grow);
+  ta.addEventListener('input', ()=>{
+    grow();
+    const lit = ta.value.trim().length > 0;
+    leds.forEach(l => l.className = 'led ' + (lit ? 'on' : 'idle'));
+  });
   ta.addEventListener('focus', ()=>{ setTimeout(()=>stream.scrollTop = stream.scrollHeight, 120); });
   stream.scrollTop = stream.scrollHeight;
 </script>
