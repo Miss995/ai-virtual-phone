@@ -197,6 +197,8 @@ const sheetMat = new THREE.MeshStandardMaterial({color:0xe6dfd5, roughness:1.0, 
 }
 
 // 被子（盖住下半身那半张）
+let quiltBendStart = 0.52;   // 从哪开始弯（0~1，越小弯得越早）
+let quiltBendDepth = 0.17;   // 卷多深
 function makeQuilt(){
   const W = 1.52, H = 0.11, D = 1.42;
   const geo = new RoundedBoxGeometry(W, H, D, 10, 0.022);   // ★ 圆角（布软，比床垫圆）
@@ -216,9 +218,9 @@ function makeQuilt(){
 
     // ★ 边缘往下转：越靠外越往床面落
     //   上边卷得多、下边卷得少 —— 布的边缘是变薄的，不是整块沉下去
-    const t = Math.max(0, (edge - 0.52) / 0.48);   // 52% 以内不卷
+    const t = Math.max(0, (edge - quiltBendStart) / (1 - quiltBendStart));
     if (t > 0){
-      const drop = t * t * 0.17;
+      const drop = t * t * quiltBendDepth;
       v.y -= (v.y > 0) ? drop : drop * 0.45;
       v.x *= 1 + t * 0.045;                // 卷下去的时候稍微往外摊
       v.z *= 1 + t * 0.045;
@@ -229,10 +231,15 @@ function makeQuilt(){
   return geo;
 }
 const quiltMat = new THREE.MeshStandardMaterial({color:0xd6c3b4, roughness:1.0, metalness:0.0});
-const quilt = new THREE.Mesh(makeQuilt(), quiltMat);
-quilt.position.set(0, 0.735, 0.40);
-quilt.castShadow = true; quilt.receiveShadow = true;
-bed.add(quilt);
+let quiltMesh = null;
+function buildQuilt(){
+  if (quiltMesh){ quiltMesh.geometry.dispose(); bed.remove(quiltMesh); }
+  quiltMesh = new THREE.Mesh(makeQuilt(), quiltMat);
+  quiltMesh.position.set(0, 0.735, 0.40);
+  quiltMesh.castShadow = true; quiltMesh.receiveShadow = true;
+  bed.add(quiltMesh);
+}
+buildQuilt();
 
 // 枕头（压下去的圆润方块）
 function makePillow(){
@@ -395,6 +402,39 @@ rulerBtn.onclick = () => {
   rulerBtn.style.opacity = ruler.visible ? '1' : '.6';
 };
 document.body.appendChild(rulerBtn);
+
+/* ---------- 被子调节滑块 ---------- */
+{
+  const panel = document.createElement('div');
+  panel.style.cssText =
+    'position:fixed;left:14px;bottom:52px;padding:10px 14px;border-radius:14px;' +
+    'background:rgba(18,26,38,.8);border:1px solid rgba(160,210,255,.32);' +
+    'color:#bfe3ff;font:12px/1.7 -apple-system,"PingFang SC",sans-serif;' +
+    'letter-spacing:.04em;width:142px;';
+  panel.innerHTML =
+    '<div style="opacity:.65;margin-bottom:6px;">被子</div>' +
+    '<label style="display:block;margin-bottom:9px;">弯从哪开始 <b id="qsVal">0.52</b>' +
+    '<input id="qs" type="range" min="30" max="85" value="52" ' +
+    'style="width:100%;margin-top:5px;accent-color:#7fc8ff;"></label>' +
+    '<label style="display:block;">卷多深 <b id="qdVal">0.17</b>' +
+    '<input id="qd" type="range" min="0" max="25" value="17" ' +
+    'style="width:100%;margin-top:5px;accent-color:#7fc8ff;"></label>';
+  document.body.appendChild(panel);
+
+  const qs = panel.querySelector('#qs'), qd = panel.querySelector('#qd');
+  const qsVal = panel.querySelector('#qsVal'), qdVal = panel.querySelector('#qdVal');
+
+  qs.addEventListener('input', () => {
+    quiltBendStart = +qs.value / 100;
+    qsVal.textContent = quiltBendStart.toFixed(2);
+    buildQuilt();
+  });
+  qd.addEventListener('input', () => {
+    quiltBendDepth = +qd.value / 100;
+    qdVal.textContent = quiltBendDepth.toFixed(2);
+    buildQuilt();
+  });
+}
 
 /* ---------- 渲染 ---------- */
 addEventListener('resize', ()=>{
