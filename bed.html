@@ -171,7 +171,7 @@ function makeSheet(){
   const TOP = 0.640 + 0.020;                // 顶面 = 床垫最高点 + 2cm
   const BOT = 0.400;                        // 底面 = 床板顶面之上，不扎进去
   const H = TOP - BOT;                      // 0.26
-  const geo = new RoundedBoxGeometry(W, H, D, 8, 0.016);   // ★ 边做圆
+  const geo = new RoundedBoxGeometry(W, H, D, 12, 0.030);   // ★ 边做圆（比床垫更圆：布比海绵软）
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   const halfTop = H/2;
