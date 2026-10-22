@@ -17,13 +17,10 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
   body{
-    background:var(--paper);
+    background:#2A2521;
     color:var(--ink);
     font:15px/1.75 -apple-system,"PingFang SC","Noto Sans SC",sans-serif;
     display:flex;flex-direction:column;overflow:hidden;
-    /* 纸纹 */
-    background-image:
-      repeating-linear-gradient(0deg, rgba(160,140,105,.022) 0 1px, transparent 1px 3px);
   }
 
   /* ═══ 顶栏 ═══ */
@@ -42,7 +39,10 @@
   /* ═══ 消息流 ═══ */
   .stream{
     flex:1 1 auto;overflow-y:auto;
-    padding:calc(env(safe-area-inset-top) + 18px) 40px 26px;
+    margin:0 22px;
+    background:var(--paper);
+    padding:calc(env(safe-area-inset-top) + 18px) 18px 26px;
+    box-shadow:0 0 28px rgba(0,0,0,.45);
   }
 
   .day{
@@ -272,7 +272,7 @@
     <div class="mach-base"></div>
     <div class="side-slot"></div>
   </div>
-  <div class="hint" id="ver">v6 · 21:05 · 只定了长相</div>
+  <div class="hint" id="ver">v7 · 21:08 · 纸变窄了</div>
 </div>
 
 <script>
