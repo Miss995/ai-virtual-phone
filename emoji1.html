@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>表情包库 v1</title>
+<style>
+:root{--bg:#17141a;--card:#221e26;--ink:#e9e3ee;--dim:#8b8398;--accent:#ffb26b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:14px 12px 60px}
+h1{font-size:15px;font-weight:600;margin:0 0 4px}
+.sub{color:var(--dim);font-size:12px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cell{position:relative;background:var(--card);border-radius:10px;overflow:hidden;aspect-ratio:1}
+.cell img{width:100%;height:100%;object-fit:contain;display:block}
+.cell .no{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.62);color:var(--accent);font-size:10px;padding:1px 5px;border-radius:6px;font-variant-numeric:tabular-nums}
+.cell.picked{outline:2px solid var(--accent);outline-offset:-2px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#0f0d12ee;border-top:1px solid #2b2632;padding:10px 14px;font-size:12px;color:var(--dim)}
+.bar b{color:var(--accent)}
+</style></head><body>
+<h1>表情包库 · v1</h1>
+<div class="sub">点一下选中，底部会记编号。挑完把编号发我。</div>
+<div class="grid" id="g"></div>
+<div class="bar" id="bar">还没选</div>
+<script>
+const IDS = ["1XhXij3lNbkK5YplRs","1k1ytCiReJMZWVtjXd","2EknnSzq46OOSFlxJZ","2g6sCTsSoVuSfSxK4W","3TivDxgiFTxFZoh7qm","3o6ZsZwsU65E0qcok8","6tWdflf2d1ogBjv2wU","9EP5BndVp9W4AsBcz7","ATKSqPr9EBbZDf01BH","Bji7HlLgQ725R8ja10","CHwMyDQbjKlofwVBxx","D4agk57Ogf5ONE1VEt","Djp9x4m99dBp45DQ5E","DrY4EKa1V1sccSOEXM","EOW2bFPO2L0JeOLgrC","ETkTH9LIMjqrpCLHKf","FH0EiKkU2vjPHZ5op1","FPjJAvmoFnclM97WQP","GAtTF1kUyoMFx2QL7n","GJACwlJbtiWrYeWoqM","GkD4U3VfiIbzcBhQNu","GsJ9XQD0iEcs7GhnJn","KjtMo5Dc435k1BfM0K","LptvdvZLb3KLHJLc0W","MvSftPORBZstvjRXth","NAdEYIRFMCBhMGkXSq","NPwRSSWKyXkbxl8SaX","OWxojDYD5msS3hFzws","Pk9ThuWSq6zIGKQBkB","RfdXPaVCqBM5F9Kq21","RgZFvGuI4OxLjuSvRF","RsZnrbI4roIZ6p0Ya0","TIamzrXWyE9fJcYkAi","TvcgN13kbra8RhpWtI","U6ox2q5d8NgDwKnTLT","URExNvlgfjZ2rd5Gl0","V00G1fE56rwTTIsiCH","VCP6Kpf6guFm4nnF04","VFHa3Kg39gFLVbinN1","VXS7y6lz5ZEI0W7ZOB","WNGxiOtIJ9bR1Wikia","X7Bckr1JaJS1opWTzO","YfIqRqgD6HxsPTIwfg","aWa0wSRf1ibULhYOxP","bEPrrphUDvDv2dVFeX","d2rY8HNbvSf9jihXQj","fgWkTmhl5nGpBleFmx","fnoqNhyYHoZb27w6bC","gIZdEMoUJEIFhBacxq","hkqefnFjn2MWVl6xvq","hswxGoj9oEzaxR450w","iY25xIloX4bkwhcJJG","iiADTrxD3auKTYpvHe","jGrsj9ce6lHBGjQYpg","k8kITi9SAwe9JWbUaH","l2QDTsTL2NhwOEAV2","lSDZ6ee0z486ny4c4N","lfqXmq7NABf5wXMvAE","mSZOqnNeTKT1tqxCJP","nEVeLB6qkgUM32Y4Qz","nLK0utBQcQXag0TYEp","nQnMaGbVRahwyG09T5","npY8OaCJcdGvBw2GtM","ntAjufngO279BlrLLa","r7CifnDT4yrF5ro6a4","uG0KcNbb1HkaMesN7i","uq2MggmvgILHeI7O9H","wKDQJBpFvuX4uHJIrf","xEQKSpMMvVucoYwb3X","yBv1LrKkWDmU08iOJ8","yvScPAQWI5sLxEumRw","zMv36BprGxUAqoWc72"];
+const g = document.getElementById('g');
+IDS.forEach((id,i)=>{
+  const d=document.createElement('div'); d.className='cell';
+  d.innerHTML='<img loading="lazy" src="emoji/'+id+'.gif" alt=""><span class="no">'+(i+1)+'</span>';
+  d.onclick=()=>{ d.classList.toggle('picked'); render(); };
+  g.appendChild(d);
+});
+function render(){
+  const p=[];
+  document.querySelectorAll('.cell').forEach((c,i)=>{ if(c.classList.contains('picked')) p.push(i+1); });
+  document.getElementById('bar').innerHTML = p.length ? ('已选 <b>'+p.join('、')+'</b>') : '还没选';
+}
+</script></body></html>
