@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>video frame test</title>
+<style>
+body{margin:0;background:#222;font:14px system-ui;color:#fff}
+.wrap{position:relative;width:100%;height:420px;overflow:hidden;background:#000}
+/* 故意用 cover，而且框比例(360:420)跟视频比例(16:9)差很多，裁切看得最清楚 */
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tip{padding:10px}
+</style></head><body>
+<div class="wrap"><video id="v" crossorigin="anonymous" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" autoplay muted loop playsinline></video></div>
+<div class="tip">这是测试页：video 用 object-fit:cover，框 360×420，视频 16:9 —— 屏幕上看到的是裁过的中间部分。</div>
+<script>
+  var v=document.getElementById('v');
+  v.play().catch(function(){});
+</script>
+</body></html>
