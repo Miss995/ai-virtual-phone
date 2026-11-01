@@ -3090,7 +3090,8 @@ let focusKey = null, focusT = 0;
 const FP = new THREE.Vector3(), FT = new THREE.Vector3(), FF = new THREE.Vector3(); let FFOV = 30;
 /* 聚焦时直接点另一样东西：镜头从当前这个机位滑过去（中间稍微抬一下），不直接跳 */
 const cFP = new THREE.Vector3(), cFT = new THREE.Vector3(), cFF = new THREE.Vector3(); let cFOV = 30; const SW = {t0: 0, fp: new THREE.Vector3(), ft: new THREE.Vector3(), ff: new THREE.Vector3(), fov: 30, lift: 0};
-const composer = new EffectComposer(renderer);
+const _msaaRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, _msaaRT);
 composer.addPass(new RenderPass(scene, camera));
 /* 环境遮蔽：东西贴着桌面、互相挨着的地方自然暗下去（玻璃、云、雪、透明的东西不参与） */
 const gtao = new GTAOPass(scene, camera, VW(), VH());
