@@ -31,8 +31,9 @@
     padding:11px 14px;
     border-radius:16px;
     font-size:15px;line-height:1.55;
-    background:#22252a;
-    color:#d9d6d2;
+    background:#2a2e35;
+    color:#e6e2dd;
+    box-shadow:0 2px 10px rgba(0,0,0,.25);
   }
   .row.me .bubble{
     background:linear-gradient(160deg,#ff9f5a,#f2782f);
@@ -42,14 +43,15 @@
   .row:not(.me) .bubble{border-bottom-left-radius:6px}
 
   /* 背景里几个彩色块，专门用来“透出来” */
-  .blob{position:fixed;border-radius:50%;filter:blur(46px);opacity:.55;pointer-events:none}
+  .blob{position:fixed;border-radius:50%;filter:blur(52px);opacity:.75;pointer-events:none}
   .b1{width:260px;height:260px;background:#ff7a3d;top:-60px;left:-70px}
-  .b2{width:300px;height:300px;background:#3d7fff;bottom:70px;right:-110px;opacity:.42}
-  .b3{width:220px;height:220px;background:#22c55e;top:38%;left:52%;opacity:.3}
+  .b2{width:320px;height:320px;background:#3d7fff;bottom:40px;right:-110px;opacity:.55}
+  .b3{width:240px;height:240px;background:#22c55e;top:34%;left:50%;opacity:.42}
 
   /* ---------- 输入框 ---------- */
   .inputwrap{
     position:fixed;left:0;right:0;bottom:0;
+    transition:bottom .28s cubic-bezier(.2,.8,.2,1);
     padding:0 12px calc(14px + env(safe-area-inset-bottom));
     z-index:10;
     /* 关键：这一层自己负责把背后模糊 + 染色 */
@@ -139,6 +141,10 @@
   }
   .presets button:active{background:rgba(255,255,255,.12)}
 
+  /* 面板弹出来的时候，输入框整块往上顶，别被压住 */
+  body.panel-open .inputwrap{bottom:210px}
+  body.panel-open .handle{opacity:0;pointer-events:none}
+
   .handle{
     position:fixed;right:16px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:30;
     padding:10px 14px;border-radius:20px;font-size:13px;
@@ -207,8 +213,8 @@
 const root = document.documentElement;
 const ctl = document.getElementById('controls');
 document.getElementById('handle').onclick = () => {
-  ctl.classList.toggle('show');
-  document.getElementById('handle').style.opacity = ctl.classList.contains('show') ? '0' : '1';
+  const open = ctl.classList.toggle('show');
+  document.body.classList.toggle('panel-open', open);
 };
 document.getElementById('handle').style.transition = 'opacity .2s';
 
