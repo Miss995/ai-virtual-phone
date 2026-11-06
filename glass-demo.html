@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>液态玻璃 · 对比</title>
+<style>
+  :root{
+    --blur: 0px;
+    --tint: 0;
+    --edge: 0;
+    --glow: 0;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:#0f1012;
+    color:#e8e6e3;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans CJK SC",sans-serif;
+    overflow:hidden;
+  }
+
+  /* ---------- 假聊天背景 ---------- */
+  .stage{position:fixed;inset:0;overflow:hidden}
+  .chat{padding:18px 16px 160px;display:flex;flex-direction:column;gap:14px}
+  .row{display:flex}
+  .row.me{justify-content:flex-end}
+  .bubble{
+    max-width:76%;
+    padding:11px 14px;
+    border-radius:16px;
+    font-size:15px;line-height:1.55;
+    background:#22252a;
+    color:#d9d6d2;
+  }
+  .row.me .bubble{
+    background:linear-gradient(160deg,#ff9f5a,#f2782f);
+    color:#2a1400;
+    border-bottom-right-radius:6px;
+  }
+  .row:not(.me) .bubble{border-bottom-left-radius:6px}
+
+  /* 背景里几个彩色块，专门用来“透出来” */
+  .blob{position:fixed;border-radius:50%;filter:blur(46px);opacity:.55;pointer-events:none}
+  .b1{width:260px;height:260px;background:#ff7a3d;top:-60px;left:-70px}
+  .b2{width:300px;height:300px;background:#3d7fff;bottom:70px;right:-110px;opacity:.42}
+  .b3{width:220px;height:220px;background:#22c55e;top:38%;left:52%;opacity:.3}
+
+  /* ---------- 输入框 ---------- */
+  .inputwrap{
+    position:fixed;left:0;right:0;bottom:0;
+    padding:0 12px calc(14px + env(safe-area-inset-bottom));
+    z-index:10;
+    /* 关键：这一层自己负责把背后模糊 + 染色 */
+    backdrop-filter: blur(var(--blur)) saturate(calc(100% + var(--glow) * 90%));
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(calc(100% + var(--glow) * 90%));
+  }
+  .panel{
+    position:relative;
+    display:flex;align-items:center;gap:10px;
+    min-height:52px;
+    padding:8px 10px;
+    border-radius:24px;
+    background:rgba(26,28,32, calc(0.96 - var(--tint) * 0.80));
+    border:1px solid rgba(255,255,255, calc(0.06 + var(--edge) * 0.20));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255, calc(var(--edge) * 0.30)),
+      inset 0 -1px 0 rgba(255,255,255, calc(var(--edge) * 0.07)),
+      0 10px 30px rgba(0,0,0, calc(0.45 - var(--tint) * 0.10));
+    overflow:hidden;
+  }
+  /* 斜向高光 */
+  .panel::before{
+    content:"";
+    position:absolute;inset:0;
+    background:linear-gradient(115deg,
+      rgba(255,255,255, calc(var(--glow) * 0.16)) 0%,
+      rgba(255,255,255,0) 38%,
+      rgba(255,255,255,0) 62%,
+      rgba(255,255,255, calc(var(--glow) * 0.07)) 100%);
+    pointer-events:none;
+  }
+  /* 边缘那圈亮线 */
+  .panel::after{
+    content:"";
+    position:absolute;inset:0;
+    border-radius:inherit;
+    padding:1px;
+    background:linear-gradient(140deg,
+      rgba(255,255,255, calc(var(--edge) * 0.55)),
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0) 65%,
+      rgba(255,255,255, calc(var(--edge) * 0.22)));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    pointer-events:none;
+  }
+
+  .plus{
+    width:34px;height:34px;flex:0 0 34px;border-radius:50%;
+    display:grid;place-items:center;font-size:20px;color:#cfcabf;
+    background:rgba(255,255,255,.06);
+  }
+  .field{flex:1;font-size:15px;color:#8b8680;padding:4px 2px}
+  .send{
+    flex:0 0 auto;padding:9px 16px;border-radius:18px;font-size:14px;font-weight:600;
+    color:#2a1400;background:linear-gradient(160deg,#ffb066,#f2782f);
+  }
+
+  /* ---------- 滑块 ---------- */
+  .controls{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    padding:12px 18px calc(16px + env(safe-area-inset-bottom));
+    background:rgba(10,11,13,.92);
+    backdrop-filter:blur(18px);
+    border-top:1px solid rgba(255,255,255,.08);
+    transform:translateY(100%);
+    transition:transform .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .controls.show{transform:translateY(0)}
+  .controls h4{margin:0 0 10px;font-size:12px;font-weight:500;color:#7d7873;letter-spacing:.08em}
+  .ctl{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .ctl label{font-size:12px;color:#9a948e;width:56px;flex:0 0 56px}
+  .ctl input[type=range]{
+    flex:1;-webkit-appearance:none;height:26px;background:transparent;
+  }
+  .ctl input[type=range]::-webkit-slider-runnable-track{
+    height:4px;border-radius:2px;background:#2b2e33;
+  }
+  .ctl input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:#ff9f5a;margin-top:-8px;box-shadow:0 0 0 4px rgba(255,159,90,.16);
+  }
+  .presets{display:flex;gap:8px;margin-top:4px}
+  .presets button{
+    flex:1;padding:9px 0;border-radius:12px;border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.04);color:#c9c4bd;font-size:13px;
+  }
+  .presets button:active{background:rgba(255,255,255,.12)}
+
+  .handle{
+    position:fixed;right:16px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:30;
+    padding:10px 14px;border-radius:20px;font-size:13px;
+    background:rgba(30,33,38,.9);border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(14px);color:#cfcabf;
+  }
+</style>
+</head>
+<body>
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+
+<div class="stage">
+  <div class="chat">
+    <div class="row me"><div class="bubble">小猫，你看这个玻璃</div></div>
+    <div class="row"><div class="bubble">（凑近看）嗯，会弯。</div></div>
+    <div class="row me"><div class="bubble">我想要界面变成这样</div></div>
+    <div class="row"><div class="bubble">那得先试试，别一上手就把你输入框弄崩了。</div></div>
+    <div class="row me"><div class="bubble">大概什么效果能先看到吗？</div></div>
+    <div class="row"><div class="bubble">能。下面这条滑块，你拖就知道了。</div></div>
+    <div class="row me"><div class="bubble">拽过去了</div></div>
+    <div class="row"><div class="bubble">那你看着调 —— 觉得像了就停。</div></div>
+  </div>
+</div>
+
+<!-- 输入框 -->
+<div class="inputwrap">
+  <div class="panel">
+    <div class="plus">＋</div>
+    <div class="field">跟小猫说说话…</div>
+    <div class="send">发送</div>
+  </div>
+</div>
+
+<div class="handle" id="handle">调一下 ▴</div>
+
+<!-- 滑块 -->
+<div class="controls" id="controls">
+  <h4>GLASS</h4>
+  <div class="ctl">
+    <label>模糊</label>
+    <input type="range" id="rBlur" min="0" max="40" value="0" step="1">
+  </div>
+  <div class="ctl">
+    <label>通透</label>
+    <input type="range" id="rTint" min="0" max="100" value="0" step="1">
+  </div>
+  <div class="ctl">
+    <label>边光</label>
+    <input type="range" id="rEdge" min="0" max="100" value="0" step="1">
+  </div>
+  <div class="ctl">
+    <label>斜光</label>
+    <input type="range" id="rGlow" min="0" max="100" value="0" step="1">
+  </div>
+  <div class="presets">
+    <button data-p="0">现在的样子</button>
+    <button data-p="1">玻璃（推荐）</button>
+    <button data-p="2">玻璃（更浓）</button>
+  </div>
+</div>
+
+<script>
+const root = document.documentElement;
+const ctl = document.getElementById('controls');
+document.getElementById('handle').onclick = () => {
+  ctl.classList.toggle('show');
+  document.getElementById('handle').style.opacity = ctl.classList.contains('show') ? '0' : '1';
+};
+document.getElementById('handle').style.transition = 'opacity .2s';
+
+const rBlur = document.getElementById('rBlur');
+const rTint = document.getElementById('rTint');
+const rEdge = document.getElementById('rEdge');
+const rGlow = document.getElementById('rGlow');
+
+function apply(){
+  root.style.setProperty('--blur', rBlur.value + 'px');
+  root.style.setProperty('--tint', rTint.value / 100);
+  root.style.setProperty('--edge', rEdge.value / 100);
+  root.style.setProperty('--glow', rGlow.value / 100);
+  history.replaceState(null,'','#'+[rBlur.value,rTint.value,rEdge.value,rGlow.value].join(','));
+}
+
+[rBlur,rTint,rEdge,rGlow].forEach(el => el.addEventListener('input', apply));
+
+const presets = {
+  0: [0, 0, 0, 0],
+  1: [18, 72, 70, 55],
+  2: [26, 88, 85, 70],
+};
+document.querySelectorAll('.presets button').forEach(b => {
+  b.onclick = () => {
+    const v = presets[b.dataset.p];
+    rBlur.value = v[0]; rTint.value = v[1]; rEdge.value = v[2]; rGlow.value = v[3];
+    apply();
+  };
+});
+
+// 支持从 URL 带参数进来，方便把调好的那组数字记下来
+const h = location.hash.slice(1);
+if (h) {
+  const v = h.split(',').map(Number);
+  if (v.length === 4 && v.every(n => !isNaN(n))) {
+    rBlur.value=v[0]; rTint.value=v[1]; rEdge.value=v[2]; rGlow.value=v[3];
+  }
+}
+apply();
+</script>
+</body>
+</html>
