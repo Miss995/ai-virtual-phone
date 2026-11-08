@@ -38,6 +38,7 @@
   <div class="row"><label>折射</label><input id="r1" type="range" min="0" max="3" step="0.05" value="1"><b id="v1">1.00</b></div>
   <div class="row"><label>模糊</label><input id="r2" type="range" min="0" max="0.03" step="0.001" value="0.010"><b id="v2">10</b></div>
   <div class="row"><label>边缘</label><input id="r3" type="range" min="0" max="1.2" step="0.02" value="0.5"><b id="v3">0.50</b></div>
+  <div class="row"><label>高光</label><input id="r4" type="range" min="0" max="2.5" step="0.05" value="1"><b id="v4">1.00</b></div>
 </div>
 
 <script>
@@ -185,6 +186,7 @@ const fs = [
 'uniform float uRefract;',
 'uniform float uBlur;',
 'uniform float uEdge;',
+'uniform float uSpec;',
 'uniform sampler2D uTex;',
 '',
 'vec3 at(vec2 uv){ return texture2D(uTex, clamp(uv, vec2(0.0), vec2(1.0))).rgb; }',
@@ -222,6 +224,13 @@ const fs = [
 '    g += vec3(edge * uEdge * 0.55);',
 '    float vert = (q.y - 0.5) * -2.0;',
 '    g += vec3(0.06 * vert);',
+'',
+'    vec2 hp = (q - vec2(0.13, 0.24)) * vec2(1.0, 0.60);',
+'    float spec1 = smoothstep(0.34, 0.0, length(hp)) * 0.18;',
+'    float dg  = (q.x + q.y) * 0.72;',
+'    float spec2 = smoothstep(0.15, 0.0, abs(dg - 0.28)) * 0.11;',
+'    spec2 *= smoothstep(0.88, 0.10, q.y);',
+'    g += vec3((spec1 + spec2) * uSpec);',
 '',
 '    col = mix(col, g, smoothstep(0.9, -0.6, sd));',
 '  }',
@@ -265,6 +274,7 @@ const U = {
   refract: gl.getUniformLocation(prog, 'uRefract'),
   blur:    gl.getUniformLocation(prog, 'uBlur'),
   edge:    gl.getUniformLocation(prog, 'uEdge'),
+  spec:    gl.getUniformLocation(prog, 'uSpec'),
   tex:     gl.getUniformLocation(prog, 'uTex'),
 };
 
@@ -272,6 +282,7 @@ const dock = document.getElementById('dock');
 const r1 = document.getElementById('r1');
 const r2 = document.getElementById('r2');
 const r3 = document.getElementById('r3');
+const r4 = document.getElementById('r4');
 
 let rect = [0,0,100,56];
 let dpr = 1;
@@ -288,6 +299,7 @@ function draw(){
   gl.uniform1f(U.refract, parseFloat(r1.value));
   gl.uniform1f(U.blur, parseFloat(r2.value));
   gl.uniform1f(U.edge, parseFloat(r3.value));
+  gl.uniform1f(U.spec, parseFloat(r4.value));
   gl.uniform1i(U.tex, 0);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -296,6 +308,7 @@ function draw(){
   document.getElementById('v1').textContent = parseFloat(r1.value).toFixed(2);
   document.getElementById('v2').textContent = Math.round(parseFloat(r2.value) * 1000);
   document.getElementById('v3').textContent = parseFloat(r3.value).toFixed(2);
+  document.getElementById('v4').textContent = parseFloat(r4.value).toFixed(2);
 }
 
 let rafPending = false;
@@ -350,7 +363,7 @@ cvs.addEventListener('wheel', function(e){
   e.preventDefault();
 }, {passive:false});
 
-r1.oninput = r2.oninput = r3.oninput = draw;
+r1.oninput = r2.oninput = r3.oninput = r4.oninput = draw;
 addEventListener('resize', resize);
 addEventListener('orientationchange', function(){ setTimeout(resize, 180); });
 setTimeout(resize, 60);
