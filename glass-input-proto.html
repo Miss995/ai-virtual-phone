@@ -74,13 +74,15 @@ uniform float uBlur;
 uniform float uEdge;
 
 vec3 bg(vec2 uv){
-  vec3 c = mix(vec3(0.070,0.059,0.053), vec3(0.129,0.102,0.086), uv.y);
-  c += vec3(1.00,0.70,0.48) * 0.16 * smoothstep(0.42,0.0,length(uv-vec2(0.22,0.78)));
-  c += vec3(0.48,0.83,1.00) * 0.13 * smoothstep(0.40,0.0,length(uv-vec2(0.80,0.68)));
-  c += vec3(1.00,0.56,0.69) * 0.12 * smoothstep(0.44,0.0,length(uv-vec2(0.58,0.24)));
-  c += vec3(0.66,1.00,0.61) * 0.08 * smoothstep(0.36,0.0,length(uv-vec2(0.10,0.18)));
-  float s = sin((uv.x + uv.y * 0.55) * 220.0);
-  c += vec3(0.020) * smoothstep(0.60,1.0,s);
+  vec3 c = mix(vec3(0.16,0.13,0.115), vec3(0.34,0.27,0.21), uv.y);
+  c += vec3(1.00,0.66,0.38) * 0.45 * smoothstep(0.90,0.0,length(uv-vec2(0.18,0.80)));
+  c += vec3(0.38,0.78,1.00) * 0.34 * smoothstep(0.85,0.0,length(uv-vec2(0.86,0.64)));
+  c += vec3(1.00,0.46,0.62) * 0.30 * smoothstep(0.80,0.0,length(uv-vec2(0.54,0.20)));
+  c += vec3(0.55,1.00,0.50) * 0.22 * smoothstep(0.72,0.0,length(uv-vec2(0.06,0.14)));
+  float band = sin((uv.x * 0.85 + uv.y) * 7.0) * 0.5 + 0.5;
+  c += vec3(0.075,0.060,0.045) * band;
+  float s2 = sin((uv.x + uv.y * 0.55) * 260.0);
+  c += vec3(0.026) * smoothstep(0.55,1.0,s2);
   return c;
 }
 
