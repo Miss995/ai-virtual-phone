@@ -39,6 +39,7 @@
   <div class="row"><label>模糊</label><input id="r2" type="range" min="0" max="0.03" step="0.001" value="0.010"><b id="v2">10</b></div>
   <div class="row"><label>边缘</label><input id="r3" type="range" min="0" max="1.2" step="0.02" value="0.5"><b id="v3">0.50</b></div>
   <div class="row"><label>高光</label><input id="r4" type="range" min="0" max="2.5" step="0.05" value="1"><b id="v4">1.00</b></div>
+  <div class="row"><label>凸度</label><input id="r5" type="range" min="0" max="1.5" step="0.05" value="0.6"><b id="v5">0.60</b></div>
 </div>
 
 <script>
@@ -187,6 +188,7 @@ const fs = [
 'uniform float uBlur;',
 'uniform float uEdge;',
 'uniform float uSpec;',
+'uniform float uZoom;',
 'uniform sampler2D uTex;',
 '',
 'vec3 at(vec2 uv){ return texture2D(uTex, clamp(uv, vec2(0.0), vec2(1.0))).rgb; }',
@@ -219,7 +221,13 @@ const fs = [
 '    vec2 dir   = normalize(q - 0.5 + vec2(1e-5));',
 '    vec2 shift = dir * edge * edge * uRefract * 0.030;',
 '',
-'    vec3 g = blurAt(uv + shift, uBlur);',
+'    vec2 elemCenter = (uRect.xy + half2) / uRes;',
+'    elemCenter.y = 1.0 - elemCenter.y;',
+'    vec2 src = uv + shift;',
+'    float kz = 1.0 - (1.0 - edge) * uZoom * 0.06;',
+'    src = elemCenter + (src - elemCenter) * kz;',
+'',
+'    vec3 g = blurAt(src, uBlur);',
 '    g = mix(g, vec3(1.0), 0.05);',
 '    g += vec3(edge * uEdge * 0.55);',
 '    float vert = (q.y - 0.5) * -2.0;',
@@ -275,6 +283,7 @@ const U = {
   blur:    gl.getUniformLocation(prog, 'uBlur'),
   edge:    gl.getUniformLocation(prog, 'uEdge'),
   spec:    gl.getUniformLocation(prog, 'uSpec'),
+  zoom:    gl.getUniformLocation(prog, 'uZoom'),
   tex:     gl.getUniformLocation(prog, 'uTex'),
 };
 
@@ -283,6 +292,7 @@ const r1 = document.getElementById('r1');
 const r2 = document.getElementById('r2');
 const r3 = document.getElementById('r3');
 const r4 = document.getElementById('r4');
+const r5 = document.getElementById('r5');
 
 let rect = [0,0,100,56];
 let dpr = 1;
@@ -300,6 +310,7 @@ function draw(){
   gl.uniform1f(U.blur, parseFloat(r2.value));
   gl.uniform1f(U.edge, parseFloat(r3.value));
   gl.uniform1f(U.spec, parseFloat(r4.value));
+  gl.uniform1f(U.zoom, parseFloat(r5.value));
   gl.uniform1i(U.tex, 0);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -309,6 +320,7 @@ function draw(){
   document.getElementById('v2').textContent = Math.round(parseFloat(r2.value) * 1000);
   document.getElementById('v3').textContent = parseFloat(r3.value).toFixed(2);
   document.getElementById('v4').textContent = parseFloat(r4.value).toFixed(2);
+  document.getElementById('v5').textContent = parseFloat(r5.value).toFixed(2);
 }
 
 let rafPending = false;
@@ -363,7 +375,7 @@ cvs.addEventListener('wheel', function(e){
   e.preventDefault();
 }, {passive:false});
 
-r1.oninput = r2.oninput = r3.oninput = r4.oninput = draw;
+r1.oninput = r2.oninput = r3.oninput = r4.oninput = r5.oninput = draw;
 addEventListener('resize', resize);
 addEventListener('orientationchange', function(){ setTimeout(resize, 180); });
 setTimeout(resize, 60);
