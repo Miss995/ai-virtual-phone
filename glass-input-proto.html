@@ -226,7 +226,7 @@ const fs = [
 '    // 法向：直边垂直于边，圆角从圆心向外',
 '    vec2 dvec   = cp - center;',
 '    vec2 inner  = clamp(dvec, -half2 + vec2(uRadius), half2 - vec2(uRadius));',
-'    vec2 dirCss = normalize(dvec - inner + vec2(1e-4));',
+'    vec2 dirCss = normalize(dvec - inner + vec2(0.0001));',
 '    vec2 dir    = vec2(dirCss.x, -dirCss.y);',
 '    vec2 shift  = dir * edge * e0 * uRefract * (0.002 + 0.014 * uThick);',
 '',
@@ -248,7 +248,7 @@ const fs = [
 '    //   ② 高光  glint  —— 只走左上/右下两段，中间是空的，极细，带底色',
 '    // 旧版的错：面上画一个椭圆斑(spec1) + 一条 45° 直线(spec2, q.x+q.y=常数 就是条直线)，',
 '    //          宝一眼看出"圆角玻璃为什么高光是直线"，就是 spec2。两个都删。',
-'    vec2 nd = normalize(dvec + vec2(1e-4));          // 从中心指向该点（CSS 坐标，y 向下）',
+'    vec2 nd = normalize(dvec + vec2(0.0001));          // 从中心指向该点（CSS 坐标，y 向下）',
 '    float ang2 = atan(nd.y, nd.x);',
 '    // ⚠️ 这里不能写 exp(-pow(x, 2.0))：GLSL ES 的 pow 在底数为负时是未定义的，',
 '    //    返回 NaN → 整块画成黑的（2026-11-08 宝刷新页面直接黑屏，就是这一条）。',
@@ -284,7 +284,17 @@ const fs = [
 function mkShader(type, src){
   const s = gl.createShader(type);
   gl.shaderSource(s, src); gl.compileShader(s);
-  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('shader:', gl.getShaderInfoLog(s));
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+    const log = gl.getShaderInfoLog(s) || '(empty log)';
+    console.error('shader:', log);
+    // 【2026-11-08】宝那边只能看到黑屏、看不到 console，所以把编译错误直接铺在页面上，
+    // 一截图就能定位。修好后这层不会出现（只在编译失败时才长出来）。
+    const box = document.createElement('pre');
+    box.style.cssText = 'position:fixed;inset:0;z-index:99999;margin:0;padding:14px;'
+      + 'background:#fff;color:#c00;font:11px/1.45 monospace;white-space:pre-wrap;overflow:auto';
+    box.textContent = 'SHADER COMPILE ERROR\n\n' + log;
+    (document.body || document.documentElement).appendChild(box);
+  }
   return s;
 }
 const prog = gl.createProgram();
