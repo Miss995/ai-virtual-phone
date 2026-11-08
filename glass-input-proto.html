@@ -14,6 +14,9 @@
   #dock{position:fixed;left:12px;right:12px;bottom:16px;height:56px;border-radius:22px;pointer-events:none}
 
   .panel.folded .row{display:none}
+  .panel button{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);
+    color:#f3e9dc;border-radius:9px;padding:7px 0;font-size:13px}
+  .panel button:active{background:rgba(255,255,255,.22)}
   .panel{position:fixed;left:12px;right:12px;bottom:84px;background:rgba(20,17,16,.86);
          border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:11px 14px;
          display:flex;flex-direction:column;gap:9px;backdrop-filter:blur(12px);z-index:9}
@@ -36,6 +39,10 @@
 
 <div class="panel">
   <div class="hd" onclick="this.parentNode.classList.toggle('folded')" style="cursor:pointer">液 态 玻 璃 · 参 数 <span style="opacity:.5;font-size:11px">点这收起</span></div>
+  <div class="row" style="gap:8px">
+    <button id="pGlass" style="flex:1">玻璃版</button>
+    <button id="pBubble" style="flex:1">泡泡版</button>
+  </div>
   <div class="row"><label>厚度</label><input id="r0" type="range" min="0" max="1.5" step="0.02" value="0.4"><b id="v0">0.40</b></div>
   <div class="row"><label>折射</label><input id="r1" type="range" min="0" max="3" step="0.05" value="1"><b id="v1">1.00</b></div>
   <div class="row"><label>模糊</label><input id="r2" type="range" min="0" max="0.03" step="0.001" value="0.010"><b id="v2">10</b></div>
@@ -504,6 +511,27 @@ cvs.addEventListener('wheel', function(e){
 }, {passive:false});
 
 r0.oninput = r1.oninput = r2.oninput = r3.oninput = r4.oninput = r5.oninput = r6.oninput = r7.oninput = draw;
+
+// 【预设 · 2026-11-08 22:3x】宝："泡泡挺好看的，留作备用" ——
+//   泡泡版 = 她调了两小时那一套（曲率均匀地圆，整块都在弯）
+//   玻璃版 = 反过来：中间几乎不缩、边缘鼓一点点但范围很窄（平的多、弯的少）
+const PRESETS = {
+  'pGlass':  [0.88, 3.00, 0, 0.30, 0.95, 0.12, 0.34, 18],
+  'pBubble': [0.88, 3.00, 0, 0.30, 0.95, 0.40, 0.92, 7],
+};
+for (const id of ['pGlass','pBubble']){
+  const btn = document.getElementById(id);
+  if (!btn) continue;
+  btn.onclick = () => {
+    const v = PRESETS[id];
+    [r0,r1,r2,r3,r4,r5,r6,r7].forEach((el,i) => { el.value = v[i]; });
+    ['v0','v1','v2','v3','v4','v5','v6','v7'].forEach((vid,i) => {
+      const el = document.getElementById(vid);
+      if (el) el.textContent = (i === 2) ? Math.round(v[i]*1000) : (i === 7 ? v[i] : v[i].toFixed(2));
+    });
+    draw();
+  };
+}
 addEventListener('resize', resize);
 addEventListener('orientationchange', function(){ setTimeout(resize, 180); });
 setTimeout(resize, 60);
