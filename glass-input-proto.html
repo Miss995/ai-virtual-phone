@@ -42,6 +42,7 @@
   <div class="row"><label>高光</label><input id="r4" type="range" min="0" max="2.5" step="0.05" value="1"><b id="v4">1.00</b></div>
   <div class="row"><label>凸度</label><input id="r5" type="range" min="0" max="1.5" step="0.05" value="0.6"><b id="v5">0.60</b></div>
   <div class="row"><label>边放</label><input id="r6" type="range" min="0" max="1.5" step="0.02" value="0.6"><b id="v6">0.60</b></div>
+  <div class="row"><label>边距</label><input id="r7" type="range" min="3" max="40" step="1" value="13"><b id="v7">13</b></div>
 </div>
 
 <script>
@@ -194,6 +195,8 @@ const fs = [
 'uniform float uThick;',
 '// 【2026-11-08】宝要"单独拉边缘放大"的滑杆：凸度只管中间缩小，边放只管最外一圈放大 —— 两者不再绑一起。',
 'uniform float uRim;',
+'// 【2026-11-08】边距：边缘放大影响多宽（CSS px）。以前写死 13px，宝要能自己拉。',
+'uniform float uRimDist;',
 'uniform sampler2D uTex;',
 '',
 'vec3 at(vec2 uv){ return texture2D(uTex, clamp(uv, vec2(0.0), vec2(1.0))).rgb; }',
@@ -258,7 +261,8 @@ const fs = [
 '    //   改成按**离边界的距离**算：从边界往里 uRadius*0.6（约 13px）都算"边缘"，越靠边放得越猛。',
 '    float kz = 1.0 + (0.018 + 0.038 * uThick) * uZoom;',
 '    float dEdge = max(-sd, 0.0);',
-'    float edgeZone = 1.0 - smoothstep(0.0, uRadius * 0.6, dEdge);',
+'    // ⚠️ 这一段在 dpr 定义之前，所以用 uRadius/22 换算 CSS px（uRadius = 22*dpr）',
+'    float edgeZone = 1.0 - smoothstep(0.0, uRimDist * uRadius / 22.0, dEdge);',
 '    kz -= (0.050 + 0.130 * uThick) * uRim * edgeZone;   // 边缘放大：独立滑杆，不再跟凸度绑',
 
 '    src = elemCenter + (src - elemCenter) * kz;',
@@ -387,6 +391,7 @@ const U = {
   zoom:    gl.getUniformLocation(prog, 'uZoom'),
   thick:   gl.getUniformLocation(prog, 'uThick'),
   rim:     gl.getUniformLocation(prog, 'uRim'),
+  rimDist: gl.getUniformLocation(prog, 'uRimDist'),
   tex:     gl.getUniformLocation(prog, 'uTex'),
 };
 
@@ -398,6 +403,7 @@ const r3 = document.getElementById('r3');
 const r4 = document.getElementById('r4');
 const r5 = document.getElementById('r5');
 const r6 = document.getElementById('r6');
+const r7 = document.getElementById('r7');
 
 let rect = [0,0,100,56];
 let dpr = 1;
@@ -418,6 +424,7 @@ function draw(){
   gl.uniform1f(U.zoom, parseFloat(r5.value));
   gl.uniform1f(U.thick, parseFloat(r0.value));
   gl.uniform1f(U.rim, parseFloat(r6.value));
+  gl.uniform1f(U.rimDist, parseFloat(r7.value));
   gl.uniform1i(U.tex, 0);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -430,6 +437,7 @@ function draw(){
   document.getElementById('v4').textContent = parseFloat(r4.value).toFixed(2);
   document.getElementById('v5').textContent = parseFloat(r5.value).toFixed(2);
   document.getElementById('v6').textContent = parseFloat(r6.value).toFixed(2);
+  document.getElementById('v7').textContent = parseFloat(r7.value).toFixed(0);
 }
 
 let rafPending = false;
@@ -484,7 +492,7 @@ cvs.addEventListener('wheel', function(e){
   e.preventDefault();
 }, {passive:false});
 
-r0.oninput = r1.oninput = r2.oninput = r3.oninput = r4.oninput = r5.oninput = r6.oninput = draw;
+r0.oninput = r1.oninput = r2.oninput = r3.oninput = r4.oninput = r5.oninput = r6.oninput = r7.oninput = draw;
 addEventListener('resize', resize);
 addEventListener('orientationchange', function(){ setTimeout(resize, 180); });
 setTimeout(resize, 60);
