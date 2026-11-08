@@ -13,6 +13,7 @@
   /* 玻璃占位：只用来量位置 */
   #dock{position:fixed;left:12px;right:12px;bottom:16px;height:56px;border-radius:22px;pointer-events:none}
 
+  .panel.folded .row{display:none}
   .panel{position:fixed;left:12px;right:12px;bottom:84px;background:rgba(20,17,16,.86);
          border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:11px 14px;
          display:flex;flex-direction:column;gap:9px;backdrop-filter:blur(12px);z-index:9}
@@ -34,7 +35,7 @@
 <div class="hint">↑ 划一下，让字从玻璃底下过</div>
 
 <div class="panel">
-  <div class="hd">液 态 玻 璃 · 参 数</div>
+  <div class="hd" onclick="this.parentNode.classList.toggle('folded')" style="cursor:pointer">液 态 玻 璃 · 参 数 <span style="opacity:.5;font-size:11px">点这收起</span></div>
   <div class="row"><label>厚度</label><input id="r0" type="range" min="0" max="1.5" step="0.02" value="0.4"><b id="v0">0.40</b></div>
   <div class="row"><label>折射</label><input id="r1" type="range" min="0" max="3" step="0.05" value="1"><b id="v1">1.00</b></div>
   <div class="row"><label>模糊</label><input id="r2" type="range" min="0" max="0.03" step="0.001" value="0.010"><b id="v2">10</b></div>
@@ -129,6 +130,16 @@ function drawScene(){
   glow(0.86, 0.36, 0.50, '96,190,255',  0.30);
   glow(0.54, 0.82, 0.52, '255,120,158', 0.26);
   glow(0.06, 0.88, 0.44, '150,255,140', 0.18);
+
+  // 【标准尺 · 2026-11-08】宝"来回滑了半天看不出来对不对" —— 因为没有参照物。
+  //   铺一层 24px 的细网格：格子在玻璃下被放大/缩小/推开时，一眼就能量出来。
+  octx.save();
+  octx.globalAlpha = 0.13;
+  octx.strokeStyle = '#ffffff';
+  octx.lineWidth = 1;
+  for (let gx = 0; gx <= W; gx += 24){ octx.beginPath(); octx.moveTo(gx, 0); octx.lineTo(gx, H); octx.stroke(); }
+  for (let gy = 0; gy <= H; gy += 24){ octx.beginPath(); octx.moveTo(0, gy); octx.lineTo(W, gy); octx.stroke(); }
+  octx.restore();
 
   // 斜向细纹
   octx.save();
