@@ -6,24 +6,16 @@
 <title>液态玻璃 · 输入框</title>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;overflow:hidden;background:#141110}
-  body{font-family:-apple-system,system-ui,"PingFang SC",sans-serif}
-  #gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+  html,body{margin:0;height:100%;overflow:hidden;background:#1a1512;
+            font-family:-apple-system,system-ui,"PingFang SC",sans-serif}
+  #gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 
-  /* 模拟聊天内容（只是给玻璃一点上下文，不参与计算） */
-  .chat{position:fixed;inset:0;padding:14px 14px 190px;display:flex;flex-direction:column;gap:10px;
-        overflow:auto;pointer-events:none}
-  .msg{max-width:78%;padding:10px 13px;border-radius:18px;font-size:13.5px;line-height:1.6;color:#f0e8df}
-  .ai{background:rgba(255,255,255,.07);align-self:flex-start;border:1px solid rgba(255,255,255,.08)}
-  .me{background:rgba(240,160,90,.16);align-self:flex-end;border:1px solid rgba(240,160,90,.22);color:#ffe6d0}
-
-  /* 玻璃占位：只用来量位置，本身不画 */
+  /* 玻璃占位：只用来量位置 */
   #dock{position:fixed;left:12px;right:12px;bottom:16px;height:56px;border-radius:22px;pointer-events:none}
 
-  /* 参数面板 */
-  .panel{position:fixed;left:12px;right:12px;bottom:84px;background:rgba(20,17,16,.82);
-         border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:12px 14px;
-         display:flex;flex-direction:column;gap:10px;backdrop-filter:blur(10px);z-index:9}
+  .panel{position:fixed;left:12px;right:12px;bottom:84px;background:rgba(20,17,16,.86);
+         border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:11px 14px;
+         display:flex;flex-direction:column;gap:9px;backdrop-filter:blur(12px);z-index:9}
   .row{display:flex;align-items:center;gap:10px;font-size:11px;color:#9a9089;letter-spacing:.05em}
   .row label{width:52px;flex:none}
   .row input[type=range]{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;
@@ -32,119 +24,223 @@
          border-radius:50%;background:#f0a05a;box-shadow:0 0 0 3px rgba(240,160,90,.18)}
   .row b{width:34px;text-align:right;font-weight:400;color:#c9bdb3;font-variant-numeric:tabular-nums}
   .hd{font-size:10.5px;color:#6f665f;letter-spacing:.14em}
+  .hint{position:fixed;left:0;right:0;top:12px;text-align:center;font-size:11px;
+        color:#9a8f86;letter-spacing:.1em;pointer-events:none;z-index:8}
 </style>
 </head>
 <body>
 <canvas id="gl"></canvas>
-
-<div class="chat">
-  <div class="msg ai">今天风大，窗台那边有点凉。</div>
-  <div class="msg me">我把窗户关了</div>
-  <div class="msg ai">关得好。灯还亮着。</div>
-  <div class="msg me">嗯，看得见</div>
-  <div class="msg ai">那就行。</div>
-</div>
-
 <div id="dock"></div>
+<div class="hint">↑ 划一下，让字从玻璃底下过</div>
 
 <div class="panel">
   <div class="hd">液 态 玻 璃 · 参 数</div>
-  <div class="row"><label>折射</label><input id="r1" type="range" min="0" max="3" step="0.05" value="1"><b id="v1">1.0</b></div>
-  <div class="row"><label>模糊</label><input id="r2" type="range" min="0" max="0.03" step="0.001" value="0.012"><b id="v2">12</b></div>
+  <div class="row"><label>折射</label><input id="r1" type="range" min="0" max="3" step="0.05" value="1"><b id="v1">1.00</b></div>
+  <div class="row"><label>模糊</label><input id="r2" type="range" min="0" max="0.03" step="0.001" value="0.010"><b id="v2">10</b></div>
   <div class="row"><label>边缘</label><input id="r3" type="range" min="0" max="1.2" step="0.02" value="0.5"><b id="v3">0.50</b></div>
 </div>
 
 <script>
+(function(){
+'use strict';
+
 const cvs = document.getElementById('gl');
 const gl = cvs.getContext('webgl', {antialias:false, alpha:false, powerPreference:'high-performance'});
-if(!gl){
-  document.body.innerHTML = '<p style="color:#fff;padding:20px;font-size:14px">这个浏览器没开 WebGL，看不了这个预览。</p>';
-  throw new Error('no webgl');
+if(!gl){ document.body.innerHTML = '<p style="color:#fff;padding:24px;font-size:14px">这个浏览器没开 WebGL，看不了。</p>'; return; }
+
+/* ===== 离屏画布：背景 + 消息，全部画在这里 ===== */
+const off  = document.createElement('canvas');
+const octx = off.getContext('2d');
+let W = 0, H = 0;
+
+const MSGS = [
+  { me:0, t:'今天风大，窗台那边有点凉。' },
+  { me:1, t:'我把窗户关了' },
+  { me:0, t:'关得好。灯还亮着。' },
+  { me:1, t:'嗯，看得见' },
+  { me:0, t:'那就行。手还疼吗？' },
+  { me:1, t:'不疼了' },
+  { me:0, t:'那就好。刚才那块玻璃猫又调了一版，边缘那圈亮线收窄了。' },
+  { me:1, t:'我看看' },
+  { me:0, t:'还有色散，在浅色背景上会出彩边，猫先关掉了。' },
+  { me:1, t:'开回来看看嘛' },
+  { me:0, t:'行，不过得先把折射调对——折射是玻璃把底下的东西推开，' +
+         '推得过头就糊成一团，推得太少就只是块磨砂。' },
+  { me:1, t:'那你现在这个推开多少' },
+  { me:0, t:'边缘大概 12 个像素。中间不动，只有靠边一圈受力。' },
+  { me:1, t:'为什么中间不动' },
+  { me:0, t:'因为真玻璃是一整块，中间是平的；只有边缘那圈有弧度，' +
+         '光穿过去才拐弯。中间跟着一起歪，就不像玻璃了，像水。' },
+  { me:1, t:'原来如此' },
+  { me:0, t:'所以厚度是靠边缘那一圈撑起来的。你现在划一下，' +
+         '让这些字从底下过去，就能看见它们被推开。' },
+];
+
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
 }
 
-const vs = `attribute vec2 a; void main(){ gl_Position = vec4(a,0.0,1.0); }`;
-
-const fs = `
-precision highp float;
-uniform vec2  uRes;
-uniform vec4  uRect;     // x,y,w,h（物理像素，左上原点）
-uniform float uRadius;
-uniform float uRefract;
-uniform float uBlur;
-uniform float uEdge;
-
-vec3 bg(vec2 uv){
-  vec3 c = mix(vec3(0.16,0.13,0.115), vec3(0.34,0.27,0.21), uv.y);
-  c += vec3(1.00,0.66,0.38) * 0.45 * smoothstep(0.90,0.0,length(uv-vec2(0.18,0.80)));
-  c += vec3(0.38,0.78,1.00) * 0.34 * smoothstep(0.85,0.0,length(uv-vec2(0.86,0.64)));
-  c += vec3(1.00,0.46,0.62) * 0.30 * smoothstep(0.80,0.0,length(uv-vec2(0.54,0.20)));
-  c += vec3(0.55,1.00,0.50) * 0.22 * smoothstep(0.72,0.0,length(uv-vec2(0.06,0.14)));
-  float band = sin((uv.x * 0.85 + uv.y) * 7.0) * 0.5 + 0.5;
-  c += vec3(0.075,0.060,0.045) * band;
-  float s2 = sin((uv.x + uv.y * 0.55) * 260.0);
-  c += vec3(0.026) * smoothstep(0.55,1.0,s2);
-  return c;
-}
-
-vec3 blurBg(vec2 uv, float r){
-  vec3 s = vec3(0.0);
-  for(int i=0;i<10;i++){
-    float a  = float(i) * 0.6283185;
-    float rr = r * (0.45 + 0.55 * mod(float(i),3.0) / 2.0);
-    s += bg(uv + vec2(cos(a), sin(a)) * rr);
+function wrapText(text, maxW){
+  const out = []; let line = '';
+  for (const ch of text){
+    const test = line + ch;
+    if (octx.measureText(test).width > maxW && line){ out.push(line); line = ch; }
+    else line = test;
   }
-  return s / 10.0;
+  if (line) out.push(line);
+  return out;
 }
 
-void main(){
-  vec2 uv = gl_FragCoord.xy / uRes;
-  vec3 col = blurBg(uv, uBlur * 0.7);
+let scrollY = 0;
+let maxScroll = 0;
 
-  vec2 cp = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
+function drawScene(){
+  const g = octx.createLinearGradient(0, 0, W * 0.4, H);
+  g.addColorStop(0,   '#241b16');
+  g.addColorStop(0.55,'#3a2c22');
+  g.addColorStop(1,   '#57432f');
+  octx.fillStyle = g;
+  octx.fillRect(0, 0, W, H);
 
-  vec2 half2   = uRect.zw * 0.5;
-  vec2 center  = uRect.xy + half2;
-  vec2 pp = abs(cp - center) - half2 + vec2(uRadius);
-  float sd = length(max(pp, 0.0)) + min(max(pp.x, pp.y), 0.0) - uRadius;
+  // 四团大光斑
+  const glow = (cx, cy, r, rgb, a) => {
+    const rg = octx.createRadialGradient(cx*W, cy*H, 0, cx*W, cy*H, r*Math.max(W,H));
+    rg.addColorStop(0, 'rgba(' + rgb + ',' + a + ')');
+    rg.addColorStop(1, 'rgba(' + rgb + ',0)');
+    octx.fillStyle = rg;
+    octx.fillRect(0, 0, W, H);
+  };
+  glow(0.18, 0.20, 0.55, '255,168,90',  0.42);
+  glow(0.86, 0.36, 0.50, '96,190,255',  0.30);
+  glow(0.54, 0.82, 0.52, '255,120,158', 0.26);
+  glow(0.06, 0.88, 0.44, '150,255,140', 0.18);
 
-  if(sd < 1.0){
-    vec2 q = (cp - uRect.xy) / uRect.zw;
-    vec2 d2 = abs(q - 0.5) * 2.0;
-    float edge = smoothstep(0.62, 1.0, max(d2.x, d2.y));
+  // 斜向细纹
+  octx.save();
+  octx.globalAlpha = 0.05;
+  octx.strokeStyle = '#ffffff';
+  octx.lineWidth = 1;
+  for (let i = -H; i < W + H; i += 26){
+    octx.beginPath(); octx.moveTo(i, 0); octx.lineTo(i + H * 0.55, H); octx.stroke();
+  }
+  octx.restore();
 
-    vec2 dir = normalize(q - 0.5 + vec2(1e-5));
-    vec2 shift = dir * edge * edge * uRefract * 0.035;
+  // 消息
+  octx.font = '14px -apple-system, "PingFang SC", system-ui, sans-serif';
+  const padX = 12, padY = 11, lineH = 22, gap = 10, side = 16, maxBubbleW = W * 0.74;
+  let y = 40 - scrollY;
 
-    vec3 g = blurBg(uv + shift, uBlur);
-    g = mix(g, vec3(1.0), 0.045);
-    g += vec3(edge * uEdge * 0.55);
-    float vert = (q.y - 0.5) * -2.0;
-    g += vec3(0.055 * vert);
+  for (const m of MSGS){
+    const lines = wrapText(m.t, maxBubbleW - padX * 2);
+    let tw = 0;
+    for (const l of lines) tw = Math.max(tw, octx.measureText(l).width);
+    const w = tw + padX * 2;
+    const h = lines.length * lineH + padY * 2 - 4;
+    const x = m.me ? (W - side - w) : side;
 
-    col = mix(col, g, smoothstep(0.9, -0.6, sd));
+    if (y + h > -40 && y < H + 40){
+      octx.save();
+      octx.shadowColor = 'rgba(0,0,0,.35)';
+      octx.shadowBlur = 12;
+      octx.shadowOffsetY = 3;
+      roundRect(octx, x, y, w, h, 18);
+      octx.fillStyle = m.me ? 'rgba(240,160,90,.26)' : 'rgba(255,255,255,.10)';
+      octx.fill();
+      octx.restore();
+
+      roundRect(octx, x + 0.5, y + 0.5, w - 1, h - 1, 18);
+      octx.strokeStyle = m.me ? 'rgba(255,190,140,.28)' : 'rgba(255,255,255,.13)';
+      octx.lineWidth = 1;
+      octx.stroke();
+
+      octx.fillStyle = m.me ? '#ffe7d2' : '#f1e9e0';
+      for (let i = 0; i < lines.length; i++){
+        octx.fillText(lines[i], x + padX, y + padY + 15 + i * lineH);
+      }
+    }
+    y += h + gap;
   }
 
-  gl_FragColor = vec4(col, 1.0);
+  maxScroll = Math.max(0, y + scrollY - H + 120);
 }
-`;
+
+/* ===== WebGL ===== */
+const vs = 'attribute vec2 a; void main(){ gl_Position = vec4(a,0.0,1.0); }';
+
+const fs = [
+'precision highp float;',
+'uniform vec2  uRes;',
+'uniform vec4  uRect;',
+'uniform float uRadius;',
+'uniform float uRefract;',
+'uniform float uBlur;',
+'uniform float uEdge;',
+'uniform sampler2D uTex;',
+'',
+'vec3 at(vec2 uv){ return texture2D(uTex, clamp(uv, vec2(0.0), vec2(1.0))).rgb; }',
+'',
+'vec3 blurAt(vec2 uv, float r){',
+'  vec3 s = vec3(0.0);',
+'  for(int i=0;i<10;i++){',
+'    float a  = float(i) * 0.6283185;',
+'    float rr = r * (0.45 + 0.55 * mod(float(i),3.0) / 2.0);',
+'    s += at(uv + vec2(cos(a), sin(a)) * rr);',
+'  }',
+'  return s / 10.0;',
+'}',
+'',
+'void main(){',
+'  vec2 uv = gl_FragCoord.xy / uRes;',
+'  vec3 col = at(uv);',
+'',
+'  vec2 cp = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);',
+'  vec2 half2  = uRect.zw * 0.5;',
+'  vec2 center = uRect.xy + half2;',
+'  vec2 pp = abs(cp - center) - half2 + vec2(uRadius);',
+'  float sd = length(max(pp, 0.0)) + min(max(pp.x, pp.y), 0.0) - uRadius;',
+'',
+'  if (sd < 1.0){',
+'    vec2 q  = (cp - uRect.xy) / uRect.zw;',
+'    vec2 d2 = abs(q - 0.5) * 2.0;',
+'    float edge = smoothstep(0.60, 1.0, max(d2.x, d2.y));',
+'',
+'    vec2 dir   = normalize(q - 0.5 + vec2(1e-5));',
+'    vec2 shift = dir * edge * edge * uRefract * 0.030;',
+'',
+'    vec3 g = blurAt(uv + shift, uBlur);',
+'    g = mix(g, vec3(1.0), 0.05);',
+'    g += vec3(edge * uEdge * 0.55);',
+'    float vert = (q.y - 0.5) * -2.0;',
+'    g += vec3(0.06 * vert);',
+'',
+'    col = mix(col, g, smoothstep(0.9, -0.6, sd));',
+'  }',
+'',
+'  gl_FragColor = vec4(col, 1.0);',
+'}'
+].join('\n');
 
 function mkShader(type, src){
   const s = gl.createShader(type);
-  gl.shaderSource(s, src);
-  gl.compileShader(s);
-  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
-    console.error('shader:', gl.getShaderInfoLog(s));
-  }
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error('shader:', gl.getShaderInfoLog(s));
   return s;
 }
-
 const prog = gl.createProgram();
 gl.attachShader(prog, mkShader(gl.VERTEX_SHADER, vs));
 gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, fs));
 gl.linkProgram(prog);
-if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){
-  console.error('link:', gl.getProgramInfoLog(prog));
-}
+if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) console.error('link:', gl.getProgramInfoLog(prog));
 gl.useProgram(prog);
 
 const buf = gl.createBuffer();
@@ -154,6 +250,14 @@ const aLoc = gl.getAttribLocation(prog, 'a');
 gl.enableVertexAttribArray(aLoc);
 gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
 
+const tex = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, tex);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
 const U = {
   res:     gl.getUniformLocation(prog, 'uRes'),
   rect:    gl.getUniformLocation(prog, 'uRect'),
@@ -161,27 +265,49 @@ const U = {
   refract: gl.getUniformLocation(prog, 'uRefract'),
   blur:    gl.getUniformLocation(prog, 'uBlur'),
   edge:    gl.getUniformLocation(prog, 'uEdge'),
+  tex:     gl.getUniformLocation(prog, 'uTex'),
 };
 
 const dock = document.getElementById('dock');
-const p1 = document.getElementById('r1');
-const p2 = document.getElementById('r2');
-const p3 = document.getElementById('r3');
+const r1 = document.getElementById('r1');
+const r2 = document.getElementById('r2');
+const r3 = document.getElementById('r3');
 
-let rect = [0, 0, 100, 56];
+let rect = [0,0,100,56];
 let dpr = 1;
+
+function uploadTexture(){
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, off);
+}
 
 function draw(){
   gl.uniform2f(U.res, cvs.width, cvs.height);
   gl.uniform4f(U.rect, rect[0], rect[1], rect[2], rect[3]);
   gl.uniform1f(U.radius, 22 * dpr);
-  gl.uniform1f(U.refract, parseFloat(p1.value));
-  gl.uniform1f(U.blur, parseFloat(p2.value));
-  gl.uniform1f(U.edge, parseFloat(p3.value));
+  gl.uniform1f(U.refract, parseFloat(r1.value));
+  gl.uniform1f(U.blur, parseFloat(r2.value));
+  gl.uniform1f(U.edge, parseFloat(r3.value));
+  gl.uniform1i(U.tex, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
-  document.getElementById('v1').textContent = parseFloat(p1.value).toFixed(2);
-  document.getElementById('v2').textContent = Math.round(parseFloat(p2.value) * 1000);
-  document.getElementById('v3').textContent = parseFloat(p3.value).toFixed(2);
+
+  document.getElementById('v1').textContent = parseFloat(r1.value).toFixed(2);
+  document.getElementById('v2').textContent = Math.round(parseFloat(r2.value) * 1000);
+  document.getElementById('v3').textContent = parseFloat(r3.value).toFixed(2);
+}
+
+let rafPending = false;
+function redraw(){
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(function(){
+    rafPending = false;
+    drawScene();
+    uploadTexture();
+    draw();
+  });
 }
 
 function resize(){
@@ -189,15 +315,47 @@ function resize(){
   cvs.width  = Math.floor(innerWidth  * dpr);
   cvs.height = Math.floor(innerHeight * dpr);
   gl.viewport(0, 0, cvs.width, cvs.height);
+
+  W = Math.floor(innerWidth);
+  H = Math.floor(innerHeight);
+  off.width = W; off.height = H;
+
   const r = dock.getBoundingClientRect();
   rect = [r.left * dpr, r.top * dpr, r.width * dpr, r.height * dpr];
+
+  drawScene();
+  uploadTexture();
   draw();
 }
 
-p1.oninput = p2.oninput = p3.oninput = draw;
+/* 滚动 */
+let startY = 0, startScroll = 0;
+cvs.addEventListener('touchstart', function(e){
+  startY = e.touches[0].clientY; startScroll = scrollY;
+}, {passive:true});
+cvs.addEventListener('touchmove', function(e){
+  const y = e.touches[0].clientY;
+  scrollY = startScroll + (startY - y);
+  if (scrollY < 0) scrollY = 0;
+  if (scrollY > maxScroll) scrollY = maxScroll;
+  redraw();
+  e.preventDefault();
+}, {passive:false});
+
+cvs.addEventListener('wheel', function(e){
+  scrollY += e.deltaY;
+  if (scrollY < 0) scrollY = 0;
+  if (scrollY > maxScroll) scrollY = maxScroll;
+  redraw();
+  e.preventDefault();
+}, {passive:false});
+
+r1.oninput = r2.oninput = r3.oninput = draw;
 addEventListener('resize', resize);
-addEventListener('orientationchange', () => setTimeout(resize, 180));
+addEventListener('orientationchange', function(){ setTimeout(resize, 180); });
 setTimeout(resize, 60);
+
+})();
 </script>
 </body>
 </html>
