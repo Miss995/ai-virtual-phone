@@ -219,6 +219,7 @@ const fs = [
 '    float edge = smoothstep(0.60, 1.0, max(d2.x, d2.y));',
 '',
 '    vec2 dir   = normalize(q - 0.5 + vec2(1e-5));',
+'    dir.y = -dir.y;',
 '    vec2 shift = dir * edge * edge * uRefract * 0.030;',
 '',
 '    vec2 elemCenter = (uRect.xy + half2) / uRes;',
