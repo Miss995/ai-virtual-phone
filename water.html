@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0a1520">
-<title>水面 · water</title>
+<title>水面 · 摸一下</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin:0; padding:0; height:100%; background:#0a1520; overflow:hidden;
-    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    touch-action: none; overscroll-behavior: none; }
   #c { display:block; width:100vw; height:100vh; }
 
   #panel {
@@ -56,9 +57,9 @@
   button.on { background: rgba(120,190,255,.30); border-color: rgba(160,215,255,.55); color:#fff; }
 
   #tip {
-    position:fixed; top:14px; left:0; right:0; text-align:center;
-    color:rgba(200,225,245,.45); font-size:11px; letter-spacing:.14em;
-    pointer-events:none; transition:opacity .5s;
+    position:fixed; top:16px; left:0; right:0; text-align:center;
+    color:rgba(210,232,250,.55); font-size:12px; letter-spacing:.2em;
+    pointer-events:none; transition:opacity .8s;
   }
   #toggle {
     position:fixed; top:12px; right:12px; z-index:5;
@@ -71,18 +72,19 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="tip">水 面</div>
+<div id="tip">按 一 下 水 面</div>
 <div id="toggle">≡</div>
 
 <div id="panel">
-  <div class="hd"><b>水面参数</b><span>拖滑杆看变化</span></div>
+  <div class="hd"><b>水面参数</b><span>摸一下试试</span></div>
 
-  <div class="row"><label>波纹强度</label><input id="s_amp"   type="range" min="0" max="100" value="42"><span class="val" id="v_amp">42</span></div>
-  <div class="row"><label>波纹密度</label><input id="s_scale" type="range" min="10" max="100" value="38"><span class="val" id="v_scale">38</span></div>
-  <div class="row"><label>流速</label>    <input id="s_speed" type="range" min="0" max="100" value="30"><span class="val" id="v_speed">30</span></div>
-  <div class="row"><label>折射</label>    <input id="s_refr"  type="range" min="0" max="100" value="45"><span class="val" id="v_refr">45</span></div>
-  <div class="row"><label>高光</label>    <input id="s_spec"  type="range" min="0" max="100" value="55"><span class="val" id="v_spec">55</span></div>
-  <div class="row"><label>水色</label>    <input id="s_tint"  type="range" min="0" max="100" value="50"><span class="val" id="v_tint">50</span></div>
+  <div class="row"><label>波纹强度</label><input id="s_amp"   type="range" min="0" max="100" value="46"><span class="val" id="v_amp">46</span></div>
+  <div class="row"><label>波纹密度</label><input id="s_scale" type="range" min="10" max="100" value="42"><span class="val" id="v_scale">42</span></div>
+  <div class="row"><label>流速</label>    <input id="s_speed" type="range" min="0" max="100" value="28"><span class="val" id="v_speed">28</span></div>
+  <div class="row"><label>折射</label>    <input id="s_refr"  type="range" min="0" max="100" value="50"><span class="val" id="v_refr">50</span></div>
+  <div class="row"><label>波光</label>    <input id="s_spec"  type="range" min="0" max="100" value="62"><span class="val" id="v_spec">62</span></div>
+  <div class="row"><label>水色</label>    <input id="s_tint"  type="range" min="0" max="100" value="55"><span class="val" id="v_tint">55</span></div>
+  <div class="row"><label>手感</label>    <input id="s_rip"   type="range" min="0" max="100" value="65"><span class="val" id="v_rip">65</span></div>
 
   <div class="btns">
     <button data-bg="grid" class="on">格子底</button>
@@ -105,46 +107,80 @@ precision highp float;
 
 uniform vec2  uRes;
 uniform float uTime;
-uniform float uAmp;      // 波纹强度
-uniform float uScale;    // 波纹密度
-uniform float uSpeed;    // 流速
-uniform float uRefr;     // 折射
-uniform float uSpec;     // 高光
-uniform float uTint;     // 水色浓淡
-uniform float uBg;       // 0=格子 1=圆点 2=彩条
-uniform float uCaustics; // 0/1
+uniform float uAmp;
+uniform float uScale;
+uniform float uSpeed;
+uniform float uRefr;
+uniform float uSpec;
+uniform float uTint;
+uniform float uBg;
+uniform float uCaustics;
+uniform float uRip;
 
-// ---------- 水下那层东西 ----------
+// 6 个涟漪：xy = 位置(uv 0..1)，z = 起手时间，w = 强度
+uniform vec4 uRipples[6];
+
+// ---------- 噪声 ----------
+float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+float vnoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float a = hash21(i);
+    float b = hash21(i + vec2(1.0, 0.0));
+    float c = hash21(i + vec2(0.0, 1.0));
+    float d = hash21(i + vec2(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.52;
+    mat2 rot = mat2(0.80, 0.60, -0.60, 0.80);
+    for (int i = 0; i < 3; i++) {
+        v += a * vnoise(p);
+        p = rot * p * 2.07;
+        a *= 0.5;
+    }
+    return v;
+}
+
+// ---------- 水底 ----------
 vec3 underGrid(vec2 uv) {
-    vec3 col = mix(vec3(0.055,0.105,0.150), vec3(0.135,0.215,0.285), uv.y);
+    vec3 col = mix(vec3(0.048,0.095,0.140), vec3(0.125,0.205,0.275), uv.y);
     vec2 g = abs(fract(uv * vec2(9.0, 15.0)) - 0.5);
-    float line = smoothstep(0.46, 0.50, max(g.x, g.y));
-    col += line * vec3(0.30, 0.42, 0.52) * 0.55;
+    float line = smoothstep(0.455, 0.500, max(g.x, g.y));
+    col += line * vec3(0.30, 0.43, 0.53) * 0.55;
     float r = smoothstep(0.10, 0.0, length(uv - vec2(0.24, 0.68)));
-    col += r * vec3(0.55, 0.66, 0.72) * 0.50;
+    col += r * vec3(0.55, 0.66, 0.72) * 0.45;
     float r2 = smoothstep(0.16, 0.0, length(uv - vec2(0.78, 0.28)));
-    col += r2 * vec3(0.42, 0.36, 0.30) * 0.55;
+    col += r2 * vec3(0.42, 0.36, 0.30) * 0.50;
     return col;
 }
 
 vec3 underDots(vec2 uv) {
-    vec3 col = mix(vec3(0.075,0.095,0.135), vec3(0.155,0.195,0.255), uv.y);
+    vec3 col = mix(vec3(0.068,0.088,0.125), vec3(0.145,0.185,0.245), uv.y);
     vec2 cell = fract(uv * vec2(11.0, 17.0)) - 0.5;
-    float d = smoothstep(0.20, 0.13, length(cell));
+    float d = smoothstep(0.21, 0.13, length(cell));
     float hue = fract(uv.x * 0.9 + uv.y * 0.55);
     vec3 dotc = mix(vec3(0.62,0.74,0.86), vec3(0.55,0.60,0.82), hue);
-    col += d * dotc * 0.62;
+    col += d * dotc * 0.58;
     return col;
 }
 
 vec3 underStripes(vec2 uv) {
     float s = sin(uv.x * 14.0 + uv.y * 3.0);
-    vec3 a = vec3(0.30,0.42,0.56);
-    vec3 b = vec3(0.52,0.44,0.62);
-    vec3 col = mix(a, b, s * 0.5 + 0.5) * mix(0.55, 1.0, uv.y);
+    vec3 a = vec3(0.28,0.40,0.54);
+    vec3 b = vec3(0.50,0.42,0.60);
+    vec3 col = mix(a, b, s * 0.5 + 0.5) * mix(0.50, 1.0, uv.y);
     vec2 g = abs(fract(uv * vec2(6.0, 10.0)) - 0.5);
     float line = smoothstep(0.47, 0.50, max(g.x, g.y));
-    col += line * vec3(0.75, 0.82, 0.92) * 0.35;
+    col += line * vec3(0.72, 0.80, 0.90) * 0.30;
     return col;
 }
 
@@ -154,76 +190,106 @@ vec3 under(vec2 uv) {
     else                return underStripes(uv);
 }
 
-// ---------- 水面高度场 ----------
-float wave(vec2 p, float t) {
+// ---------- 高度场（p 空间，单位一致） ----------
+float waterHeight(vec2 p, float t) {
     float h = 0.0;
-    h += sin(p.x * 1.00 + t * 0.70) * 0.50;
-    h += sin(p.y * 1.30 - t * 0.90) * 0.42;
-    h += sin((p.x + p.y) * 0.75 + t * 1.25) * 0.32;
-    h += sin((p.x - p.y * 1.70) * 2.10 + t * 1.85) * 0.16;
-    h += sin((p.x * 2.60 + p.y * 1.10) + t * 2.60) * 0.09;
-    h += sin(length(p) * 3.20 - t * 2.10) * 0.10;
+    h += fbm(p * 0.55 + vec2( t * 0.10, t * 0.06)) * 1.00;
+    h += fbm(p * 1.50 - vec2( t * 0.18,-t * 0.12)) * 0.46;
+    h += fbm(p * 3.90 + vec2(-t * 0.30, t * 0.24)) * 0.20;
+    return h;
+}
+
+// ---------- 手指按下的涟漪（uv 空间） ----------
+float rippleH(vec2 uv, float t) {
+    float h = 0.0;
+    float aspect = uRes.x / uRes.y;
+    for (int i = 0; i < 6; i++) {
+        vec4 r = uRipples[i];
+        if (r.w <= 0.001) continue;
+        float age = t - r.z;
+        if (age < 0.0 || age > 2.8) continue;
+
+        vec2 d = uv - r.xy;
+        d.x *= aspect;
+        float dist = length(d);
+        float front = age * 0.62;
+        float ring  = exp(-pow((dist - front) * 9.0, 2.0));
+        float fall  = exp(-age * 1.55);
+        h += sin((dist - front) * 40.0) * ring * fall * r.w;
+        // 按下去的那一下中心也鼓一下
+        h += exp(-pow(dist * 26.0, 2.0)) * exp(-age * 6.0) * r.w * 1.6;
+    }
     return h;
 }
 
 void main() {
     vec2 uv = gl_FragCoord.xy / uRes;
-    vec2 p = (gl_FragCoord.xy - uRes * 0.5) / min(uRes.x, uRes.y);
-    p *= uScale;
+    float aspect = uRes.x / uRes.y;
+
+    vec2 p = (uv - 0.5) * vec2(aspect, 1.0) * uScale;
     float t = uTime * uSpeed;
 
-    // 有限差分求梯度
-    float e = 0.012;
-    float h0 = wave(p, t);
-    float hx = wave(p + vec2(e, 0.0), t);
-    float hy = wave(p + vec2(0.0, e), t);
+    // 大浪 + 细纹的梯度
+    float e = 0.006;
+    float h0 = waterHeight(p, t);
+    float hx = waterHeight(p + vec2(e, 0.0), t);
+    float hy = waterHeight(p + vec2(0.0, e), t);
     vec2 grad = vec2(hx - h0, hy - h0) / e;
 
-    float amp = uAmp * 0.010;
-    vec2 off = grad * amp * uRefr;
+    // 涟漪的梯度（uv 空间）
+    float re = 0.0020;
+    float r0 = rippleH(uv, uTime);
+    float rx = rippleH(uv + vec2(re, 0.0), uTime);
+    float ry = rippleH(uv + vec2(0.0, re), uTime);
+    vec2 rgrad = vec2(rx - r0, ry - r0) / re;
 
-    // 三通道轻微色散
-    vec2 offR = off * 1.06;
-    vec2 offG = off;
-    vec2 offB = off * 0.92;
+    float amp = uAmp * 0.0075;
+    vec2 off = grad * amp * uRefr * 0.55 + rgrad * uRip * 0.020;
 
-    vec3 colR = under(uv + offR);
-    vec3 colG = under(uv + offG);
-    vec3 colB = under(uv + offB);
+    // 三通道色散
+    vec3 colR = under(uv + off * 1.07);
+    vec3 colG = under(uv + off);
+    vec3 colB = under(uv + off * 0.90);
     vec3 col = vec3(colR.r, colG.g, colB.b);
 
-    // 水色（越深越蓝）
-    vec3 waterTint = vec3(0.12, 0.34, 0.46);
-    float depthish = 0.30 + 0.22 * sin(uv.y * 3.0 + t * 0.4);
-    col = mix(col, col * waterTint * 2.2, uTint * 0.42 * depthish);
-    col += waterTint * uTint * 0.10;
+    // 水色：越"深"越蓝，随大浪有起伏
+    float depthCue = 0.45 + 0.30 * h0;
+    vec3 waterCol = vec3(0.055, 0.235, 0.330);
+    col = mix(col, col * waterCol * 3.0, uTint * 0.34 * depthCue);
+    col += waterCol * uTint * 0.10;
 
-    // 法线 + 高光
-    vec3 n = normalize(vec3(-grad * amp * 6.0, 1.0));
-    vec3 L = normalize(vec3(0.45, 0.75, 0.55));
-    float spec = pow(max(dot(n, L), 0.0), 48.0);
-    col += spec * uSpec * vec3(1.0, 1.0, 1.0) * 1.6;
+    // 法线
+    vec3 n = normalize(vec3(-(grad * amp * 5.0 + rgrad * uRip * 0.55), 1.0));
 
-    // 掠射角再补一道柔光（水面那种"亮一片"）
-    float graze = pow(1.0 - max(n.z, 0.0), 3.0);
-    col += graze * uSpec * vec3(0.55, 0.72, 0.88) * 1.1;
+    // 主高光（锐）—— 波光粼粼的那一下
+    vec3 L = normalize(vec3(0.42, 0.80, 0.50));
+    float spec = pow(max(dot(n, L), 0.0), 90.0);
+    col += spec * uSpec * vec3(1.0, 0.99, 0.96) * 2.6;
 
-    // 水下焦散（波纹状光斑）
+    // 第二道宽高光（柔）—— 水面"亮一片"的感觉
+    float spec2 = pow(max(dot(n, L), 0.0), 14.0);
+    col += spec2 * uSpec * vec3(0.45, 0.66, 0.86) * 0.55;
+
+    // 掠射补光：波纹斜面上泛的白
+    float graze = pow(1.0 - max(n.z, 0.0), 2.2);
+    col += graze * uSpec * vec3(0.62, 0.80, 0.95) * 0.85;
+
+    // 水下焦散
     if (uCaustics > 0.5) {
-        float c1 = sin(grad.x * 9.0 + t * 1.4);
-        float c2 = sin(grad.y * 9.0 - t * 1.1);
-        float caustic = pow(abs(c1 * c2), 6.0);
-        col += caustic * vec3(0.40, 0.68, 0.78) * 0.85;
+        float c1 = sin(grad.x * 7.0 + t * 1.3);
+        float c2 = sin(grad.y * 7.0 - t * 1.0);
+        float caustic = pow(abs(c1 * c2), 5.0);
+        col += caustic * vec3(0.38, 0.66, 0.76) * 0.80;
     }
 
     // 暗角
     vec2 vg = uv - 0.5;
-    float vig = smoothstep(0.85, 0.20, length(vg * vec2(1.0, 0.9)));
-    col *= mix(0.55, 1.0, vig);
+    float vig = smoothstep(0.90, 0.18, length(vg * vec2(1.0, 0.92)));
+    col *= mix(0.50, 1.0, vig);
 
-    // 轻微色调映射
-    col = col / (col + vec3(0.85));
-    col = pow(col, vec3(0.92));
+    // 色调映射
+    col = col / (col + vec3(0.82));
+    col = pow(col, vec3(0.90));
 
     gl_FragColor = vec4(col, 1.0);
 }
@@ -234,23 +300,26 @@ void main() {
   const cvs = document.getElementById('c');
   const gl = cvs.getContext('webgl', { antialias:false, alpha:false, powerPreference:'high-performance' })
           || cvs.getContext('experimental-webgl');
-  if (!gl) { document.body.innerHTML = '<div style="color:#cfe4f5;padding:40px;font-size:14px">这台设备不给 WebGL，看不成了。</div>'; return; }
+  if (!gl) {
+    document.body.innerHTML = '<div style="color:#cfe4f5;padding:40px;font-size:14px">这台设备不给 WebGL，看不成了。</div>';
+    return;
+  }
 
   function compile(type, src) {
     const s = gl.createShader(type);
     gl.shaderSource(s, src);
     gl.compileShader(s);
     if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-      console.error(gl.getShaderInfoLog(s));
+      console.error('SHADER ERR:', gl.getShaderInfoLog(s));
     }
     return s;
   }
   const prog = gl.createProgram();
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, document.getElementById('vs').textContent));
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER,   document.getElementById('vs').textContent));
   gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, document.getElementById('fs').textContent));
   gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    console.error(gl.getProgramInfoLog(prog));
+    console.error('LINK ERR:', gl.getProgramInfoLog(prog));
   }
   gl.useProgram(prog);
 
@@ -262,12 +331,52 @@ void main() {
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
   const U = {};
-  ['uRes','uTime','uAmp','uScale','uSpeed','uRefr','uSpec','uTint','uBg','uCaustics']
+  ['uRes','uTime','uAmp','uScale','uSpeed','uRefr','uSpec','uTint','uBg','uCaustics','uRip']
     .forEach(n => U[n] = gl.getUniformLocation(prog, n));
+  U.uRipples = gl.getUniformLocation(prog, 'uRipples');
 
-  const S = { amp:42, scale:38, speed:30, refr:45, spec:55, tint:50, bg:0, caustics:1 };
+  const S = { amp:46, scale:42, speed:28, refr:50, spec:62, tint:55, rip:65, bg:0, caustics:1 };
   let paused = false, tAcc = 0, last = performance.now();
 
+  // ---------- 涟漪（6 个槽，轮着用） ----------
+  const RIP_N = 6;
+  const ripples = new Float32Array(RIP_N * 4); // xy pos, z start, w strength
+  let ripIdx = 0, lastRipTime = 0;
+
+  function addRipple(u, v, strength) {
+    const now = tAcc;
+    if (now - lastRipTime < 0.055) return;   // 节流
+    lastRipTime = now;
+    const i = ripIdx % RIP_N;
+    ripIdx++;
+    ripples[i*4+0] = u;
+    ripples[i*4+1] = v;
+    ripples[i*4+2] = now;
+    ripples[i*4+3] = strength;
+  }
+
+  function uvFromEvent(e) {
+    const r = cvs.getBoundingClientRect();
+    return [ (e.clientX - r.left) / r.width, 1.0 - (e.clientY - r.top) / r.height ];
+  }
+
+  let down = false;
+  cvs.addEventListener('pointerdown', e => {
+    down = true;
+    const [u,v] = uvFromEvent(e);
+    addRipple(u, v, 1.0);
+    lastRipTime = 0; // 第一下不节流
+  });
+  cvs.addEventListener('pointermove', e => {
+    if (!down) return;
+    const [u,v] = uvFromEvent(e);
+    addRipple(u, v, 0.75);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(t =>
+    cvs.addEventListener(t, () => { down = false; })
+  );
+
+  // ---------- 滑杆 ----------
   function bind(id, key) {
     const el = document.getElementById('s_' + id);
     const out = document.getElementById('v_' + id);
@@ -276,7 +385,7 @@ void main() {
     upd();
   }
   bind('amp','amp'); bind('scale','scale'); bind('speed','speed');
-  bind('refr','refr'); bind('spec','spec'); bind('tint','tint');
+  bind('refr','refr'); bind('spec','spec'); bind('tint','tint'); bind('rip','rip');
 
   document.querySelectorAll('[data-bg]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -302,7 +411,7 @@ void main() {
   const panel = document.getElementById('panel');
   document.getElementById('toggle').addEventListener('click', () => panel.classList.toggle('hide'));
   const tip = document.getElementById('tip');
-  setTimeout(() => tip.style.opacity = '0', 2600);
+  setTimeout(() => { tip.style.opacity = '0'; }, 3200);
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -320,16 +429,20 @@ void main() {
     last = now;
     if (!paused) tAcc += dt;
     resize();
+
     gl.uniform2f(U.uRes, cvs.width, cvs.height);
     gl.uniform1f(U.uTime, tAcc);
     gl.uniform1f(U.uAmp, S.amp / 50);
-    gl.uniform1f(U.uScale, 0.9 + S.scale / 28);
+    gl.uniform1f(U.uScale, 0.9 + S.scale / 26);
     gl.uniform1f(U.uSpeed, S.speed / 42);
     gl.uniform1f(U.uRefr, S.refr / 42);
     gl.uniform1f(U.uSpec, S.spec / 60);
     gl.uniform1f(U.uTint, S.tint / 55);
+    gl.uniform1f(U.uRip, S.rip / 65);
     gl.uniform1f(U.uBg, S.bg);
     gl.uniform1f(U.uCaustics, S.caustics);
+    gl.uniform4fv(U.uRipples, ripples);
+
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     requestAnimationFrame(frame);
   }
